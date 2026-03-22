@@ -59,6 +59,7 @@ def fetch_text(
         timeout = _timeout_tuple()
     if max_attempts is None:
         max_attempts = _max_http_attempts()
+    max_attempts = max(1, int(max_attempts))
 
     for attempt in range(1, max_attempts + 1):
         try:

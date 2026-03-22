@@ -172,7 +172,7 @@ def build_digest_html(
                 f"però cap amb data dins els pròxims <b>{window_days}</b> dies (avui inclòs). "
                 "Puja <code>WINDOW_DAYS</code> o revisa <code>TIMEZONE</code>."
             )
-        elif total_before_window == 0:
+        elif total_before_window is not None and total_before_window == 0:
             lines.append(
                 "<b>Cap font no ha aportat esdeveniments</b> (sense comptar les que han fallat). "
                 "Si només falla el CCCB, la Guia / RSS / CIDOB haurien d’omplir el llistat: "

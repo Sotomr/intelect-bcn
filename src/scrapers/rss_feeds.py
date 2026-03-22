@@ -65,7 +65,7 @@ def _date_from_entry(e: object) -> str | None:
             try:
                 dt = parsedate_to_datetime(str(raw))
                 return dt.date().isoformat()
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OSError):
                 continue
     return None
 
