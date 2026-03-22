@@ -52,7 +52,9 @@ Variables útils: `WINDOW_DAYS`, `MAX_EVENTS_PER_INSTITUTION`, `MAX_BASE_EVENTS`
 
 ## GitHub Actions
 
-El workflow `.github/workflows/intelect-bcn.yml` executa el digest **cada dilluns** (UTC 09:00; ajustable) i fa commit de:
+El workflow `.github/workflows/intelect-bcn.yml` executa el digest **cada dilluns** (UTC 09:00; ajustable). La durada depèn de la xarxa i dels reintents HTTP (CCCB 504): si cal **més** resiliència, puja `HTTP_MAX_ATTEMPTS` / `HTTP_READ_TIMEOUT` als secrets (el job serà més llarg).
+
+El workflow fa commit de:
 
 - `data/latest_snapshot.json` — última finestra d’esdeveniments enviada
 - `data/seen_event_keys.json` — registre de sessions **ja vistes** (per calcular **novetats** de veritat: només apareixen actes nous respecte a execucions anteriors, encara que canviï la setmana del calendari)

@@ -26,7 +26,7 @@ def _timeout_tuple() -> tuple[float, float]:
     if raw.isdigit():
         read_s = float(raw)
     else:
-        read_s = 180.0
+        read_s = 120.0
     return (25.0, read_s)
 
 
@@ -34,14 +34,15 @@ def _max_http_attempts() -> int:
     v = (os.getenv("HTTP_MAX_ATTEMPTS") or "").strip()
     if v.isdigit():
         return max(1, min(12, int(v)))
-    return 6
+    # Per defecte 4: equilibri entre 504 del CCCB i durada del job (6 intents + backoff llarg ≈ molts minuts)
+    return 4
 
 
 def _backoff_seconds(attempt: int, *, gateway: bool) -> float:
-    """Més pausa després de 502/503/504 (gateway)."""
+    """Pausa entre intents; gateway (504) abans era massa agressiu i allargava Actions diversos minuts."""
     if gateway:
-        return min(15.0 * attempt, 90.0)
-    return min(5.0 * attempt, 45.0)
+        return min(8.0 * attempt, 35.0)
+    return min(4.0 * attempt, 25.0)
 
 
 def fetch_text(
@@ -58,8 +59,6 @@ def fetch_text(
         timeout = _timeout_tuple()
     if max_attempts is None:
         max_attempts = _max_http_attempts()
-
-    last_net_err: BaseException | None = None
 
     for attempt in range(1, max_attempts + 1):
         try:
@@ -80,7 +79,6 @@ def fetch_text(
             r.encoding = r.apparent_encoding or "utf-8"
             return r.text
         except (requests.Timeout, requests.ConnectionError) as e:
-            last_net_err = e
             logger.warning(
                 "GET %s falla (intent %s/%s): %s",
                 url[:88],
@@ -92,6 +90,3 @@ def fetch_text(
                 time.sleep(_backoff_seconds(attempt, gateway=False))
                 continue
             raise
-
-    assert last_net_err is not None
-    raise last_net_err
