@@ -218,6 +218,8 @@ def editorial_score(e: EventItem) -> float:
     src = (e.source or "")
     if src in ("cidob", "guia_bcn"):
         s += 5.0
+    if e.rss_source_kind == "media":
+        s -= 6.0
     if src.startswith("rss:") and "iec" in _norm(e.institution):
         s += 4.0
     if "cidob" in _norm(e.institution):
@@ -277,6 +279,8 @@ def pick_highlights(
     Qualitat primer: el pool de candidats a destacat és només el que cau **a prop**
     del millor de la setmana (no es reemplaça un CCCB fort per un RSS feble).
     Després, diversitat de fonts dins aquest pool.
+    Si encara queden places, s’afegeix **una** entrada per cada font (bucket) que encara no
+    n’hagi tingut cap — evita que només el CCCB (premium + formats forts) ompli els destacats.
     """
     all_events = list(events)
     evs = [e for e in all_events if detect_format_label(e) != "Conversa / peça de mitjà"]
@@ -324,6 +328,31 @@ def pick_highlights(
             picked.append(e)
             picked_titles.add(tk)
             counts[b] += 1
+    if len(picked) < k:
+        # Fonts que encara no tenen cap destacat: el millor de cada font (sense el llindar
+        # del CCCB). Si no, els actes de la Guia / CIDOB / RSS solen quedar fora del «pool»
+        # mentre el CCCB acumula punts per premium + format.
+        buckets = sorted(
+            {source_bucket(e) for e in evs},
+            key=lambda b: -max(
+                editorial_score(x) for x in evs if source_bucket(x) == b
+            ),
+        )
+        for b in buckets:
+            if len(picked) >= k:
+                break
+            if counts.get(b, 0) > 0:
+                continue
+            for e, _s in scored_pairs:
+                if source_bucket(e) != b:
+                    continue
+                tk = _title_key(e.title)
+                if tk in picked_titles:
+                    continue
+                picked.append(e)
+                picked_titles.add(tk)
+                counts[b] += 1
+                break
     keys = {e.stable_key() for e in picked}
     rest = [e for e in all_events if e.stable_key() not in keys]
     rest.sort(key=lambda e: (-editorial_score(e), e.starts_at or "", e.title))
@@ -362,6 +391,8 @@ def display_source_line(e: EventItem) -> str:
         return inst
     if src.startswith("rss:"):
         rid = src[4:]
+        if e.rss_source_kind == "media":
+            return f"{inst} · RSS mitjà ({rid})"
         return f"{inst} · via RSS ({rid})"
     labels = {"guia_bcn": "Guia BCN", "cidob": "CIDOB"}
     if src in labels:

@@ -110,8 +110,8 @@ _INTERVIEW_OR_FEATURE = (
     "carla simon",
 )
 
-# Senyals forts que SÍ és un acte / sessió programada.
-_EVENT_STRONG = (
+# Senyals d'acte: paraules que indiquen un ACTE programat (conferència, debat, taller…).
+_EVENT_ACTION = (
     "presentació del llibre",
     "presentacion del libro",
     "presentació pública",
@@ -133,19 +133,26 @@ _EVENT_STRONG = (
     "inauguracion",
     "estrena ",
     "estreno ",
-    # «festival d'a» sol aparèixer en articles retrospectius (D'A 2011…); no com a senyal sol.
     "entrades a la venda",
     "entrades esgotades",
     "inscripció",
     "inscripcion",
     "a les ",
     "a las ",
+    "jornada ",
+    "simposi",
+    "simposio",
+    "taller ",
+)
+
+# Llocs/institucions: un article que ESMENTA un lloc no és necessàriament un ACTE al lloc.
+# Per fonts institucionals (no estrictes) reforcen, però per fonts de mitjà no basten sols.
+_EVENT_VENUE = (
     "teatre lliure",
     "teatre nacional",
     "auditori",
     "palau de la música",
     "cccb",
-    "institut d'humanitats",
     "institut d'humanitats",
     "cidob",
     "ateneu barcelonès",
@@ -153,6 +160,8 @@ _EVENT_STRONG = (
     "macba",
     "cosmocaixa",
 )
+
+_EVENT_STRONG = _EVENT_ACTION + _EVENT_VENUE
 
 _URL_EVENT_HINTS = ("/agenda/", "/event/", "/activitat/", "/actividad/", "/exposicions/", "/exposiciones/")
 
@@ -206,15 +215,13 @@ def _global_exclude(blob: str) -> bool:
 
 
 def _strict_agenda_ok(blob: str, link: str) -> bool:
-    """Per mitjans: cal senyal d’agenda o URL d’activitat; es barren titulars de premsa sols."""
+    """Per mitjans: cal senyal d’acte (conferencia, debat…) o URL d’agenda; mencions de llocs no basten."""
     if _url_suggests_event(link):
         return True
-    # Article retrospectiu amb parla de festival però sense cita: fora.
     if _retrospective_culture_article(blob):
         return False
-    if _has_strong_event_signal(blob):
+    if any(x in blob for x in _EVENT_ACTION):
         return True
-    # Pedralbes històric = article, no cita.
     if "pedralbes" in blob and "set segles" in blob:
         return False
     if "monestir de pedralbes" in blob and "històries" in blob:

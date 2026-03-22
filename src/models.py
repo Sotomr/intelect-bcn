@@ -20,6 +20,8 @@ class EventItem:
     area: str = "Cultura i espai públic"
     summary: str = ""
     source: str = ""
+    # Només RSS: "institutional" | "media" (buit = no RSS o llegat sense camp)
+    rss_source_kind: str = ""
 
     def stable_key(self) -> str:
         return f"{self.source}|{self.url}|{self.starts_at or ''}"
@@ -37,6 +39,7 @@ class EventItem:
             "area": self.area,
             "summary": self.summary,
             "source": self.source,
+            "rss_source_kind": self.rss_source_kind or "",
         }
 
     @staticmethod
@@ -53,6 +56,7 @@ class EventItem:
             area=d.get("area") or "Cultura i espai públic",
             summary=d.get("summary") or "",
             source=d.get("source") or "",
+            rss_source_kind=d.get("rss_source_kind") or "",
         )
 
 

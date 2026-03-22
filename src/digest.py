@@ -123,13 +123,31 @@ def _apply_areas(events: list[EventItem]) -> None:
         e.area = classify_area(e.title, e.institution, e.label)
 
 
-def _radar_summary_line(events: list[EventItem], failures: list[str]) -> str:
+def _source_label_radar(source: str) -> str:
+    s = (source or "").strip()
+    if s == "guia_bcn":
+        return "Guia BCN"
+    if s == "cccb":
+        return "CCCB"
+    if s == "cidob":
+        return "CIDOB"
+    if s.startswith("rss:"):
+        return f"RSS {s[4:]}"
+    return s or "?"
+
+
+def _radar_summary_line(
+    events: list[EventItem],
+    failures: list[str],
+    *,
+    scraper_counts_merged: dict[str, int] | None = None,
+) -> str:
     """Comptes per font + avís si alguna font ha fallat (informació ràpida al missatge)."""
     c: Counter[str] = Counter()
     for e in events:
         s = (e.source or "").strip()
         if s.startswith("rss:"):
-            c["RSS"] += 1
+            c[_source_label_radar(s)] += 1
         elif s == "cccb":
             c["CCCB"] += 1
         elif s == "guia_bcn":
@@ -139,15 +157,32 @@ def _radar_summary_line(events: list[EventItem], failures: list[str]) -> str:
         else:
             c[s or "?"] += 1
     parts = [f"{k}: {v}" for k, v in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
-    line = (
+    chunks: list[str] = [
         "<b>Radar:</b> "
         + str(len(events))
         + " propostes a la finestra (sessions i actes, després de filtres) — "
         + " · ".join(parts)
-    )
+    ]
+    if scraper_counts_merged:
+        merged_parts = [
+            f"{_source_label_radar(k)}: {v}"
+            for k, v in sorted(scraper_counts_merged.items(), key=lambda x: (-x[1], x[0]))
+        ]
+        chunks.append(
+            "<i>Pipeline (fusionat scrapers, sense filtre de dates encara): "
+            + " · ".join(merged_parts)
+            + "</i>"
+        )
+        if set(scraper_counts_merged.keys()) == {"cccb"}:
+            chunks.append(
+                "<i>Guia CSV, CIDOB i RSS no figuren: cap entrada abans de deduplicar "
+                "(scraper buit, RSS desactivat o cap acte amb data al feed).</i>"
+            )
     if failures:
-        line += f" · <i>{len(failures)} font(s) sense resposta (detall al final)</i>"
-    return line
+        chunks.append(
+            f"<i>{len(failures)} font(s) sense resposta (detall al final)</i>"
+        )
+    return "\n".join(chunks)
 
 
 def _format_highlight_block(e: EventItem) -> str:
@@ -195,6 +230,7 @@ def build_digest_html(
     total_before_window: int | None = None,
     highlight_count: int = 7,
     max_per_source_highlights: int = 3,
+    scraper_counts_merged: dict[str, int] | None = None,
 ) -> str:
     tz = ZoneInfo(tz_name)
     today = datetime.now(tz).date()
@@ -212,7 +248,22 @@ def build_digest_html(
         "",
     ]
     if events:
-        lines.append(_radar_summary_line(events, failures))
+        lines.append(
+            _radar_summary_line(
+                events,
+                failures,
+                scraper_counts_merged=scraper_counts_merged,
+            )
+        )
+        uniq_src = {((e.source or "").strip() or "?") for e in events}
+        if len(uniq_src) == 1 and len(events) >= 3:
+            lines.append(
+                "<i><b>Avís:</b> tot el radar és d’una sola font. "
+                "Això no és el digest «barrejant» fonts: els altres scrapers no han aportat res "
+                "a la finestra (o han fallat). Revisa logs del job, "
+                "<code>RSS_ENABLED</code>, <code>RSS_FEED_SET</code>, "
+                "connectivitat amb el CSV de la Guia i el CIDOB.</i>"
+            )
         lines.append("")
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra (o fonts buides).")

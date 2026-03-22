@@ -58,3 +58,30 @@ def test_digest_merges_same_title_multiday():
     assert "propostes" in html
     assert "CCCB:" in html
     assert "CCCB" in html
+
+
+def test_digest_shows_pipeline_counts_and_cccb_only_hint():
+    evs = [
+        EventItem(
+            institution="CCCB",
+            title=f"Acte {i}",
+            url=f"https://cccb.org/{i}",
+            starts_at="2026-03-25",
+            tier="premium",
+            source="cccb",
+        )
+        for i in range(4)
+    ]
+    html = build_digest_html(
+        evs,
+        tz_name="Europe/Madrid",
+        window_days=14,
+        max_per_institution=20,
+        max_base_events=50,
+        failures=[],
+        scraper_counts_merged={"cccb": 40},
+    )
+    assert "Pipeline" in html
+    assert "CCCB: 40" in html
+    assert "Guia CSV, CIDOB i RSS no figuren" in html
+    assert "tot el radar és d’una sola font" in html

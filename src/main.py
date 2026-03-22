@@ -52,7 +52,7 @@ def _log_by_source(events: list[EventItem], label: str) -> None:
     logger.info("%s: %s esdeveniments — per font: %s", label, len(events), ordered)
 
 
-def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
+def _run_scrapers(settings) -> tuple[list[EventItem], list[str], dict[str, int]]:
     failures: list[str] = []
     events: list[EventItem] = []
     jobs: list[tuple[str, object]] = [
@@ -64,8 +64,11 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
     if settings.rss_enabled:
         jobs.append(
             (
-                "RSS (IEC, Ara Cultura, Betevé, Directa, MACBA, Ateneu…)",
-                lambda: fetch_rss_feeds(max_per_feed=settings.rss_max_per_feed),
+                f"RSS (set={settings.rss_feed_set})",
+                lambda: fetch_rss_feeds(
+                    max_per_feed=settings.rss_max_per_feed,
+                    feed_set=settings.rss_feed_set,
+                ),
             )
         )
     workers = min(5, len(jobs))
@@ -81,12 +84,16 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
                 msg = f"{name}: {e}"
                 logger.exception("Scraper falla: %s", name)
                 failures.append(msg)
+    # Abans de filtres creuats (soroll, dedup, producte): veure si només un scraper retorna dades.
+    scraper_counts_merged: dict[str, int] = dict(
+        Counter((e.source or "?") for e in events)
+    )
     events = filter_noise_events(events)
     events = dedupe_events(events)
     logger.info("Total després de deduplicar: %s", len(events))
     events = filter_product_events(events)
     logger.info("Total després de filtres de producte (no-agenda / soroll): %s", len(events))
-    return events, failures
+    return events, failures, scraper_counts_merged
 
 
 def main() -> int:
@@ -98,7 +105,7 @@ def main() -> int:
     seen = migrate_seen_from_snapshot(seen, prev)
     is_first_seen_registry = len(seen) == 0
 
-    raw_events, failures = _run_scrapers(settings)
+    raw_events, failures, scraper_counts_merged = _run_scrapers(settings)
     windowed = filter_events_in_window(
         raw_events,
         tz_name=settings.timezone,
@@ -126,6 +133,7 @@ def main() -> int:
         total_before_window=len(raw_events),
         highlight_count=settings.digest_highlight_count,
         max_per_source_highlights=settings.digest_max_per_source_highlights,
+        scraper_counts_merged=scraper_counts_merged,
     )
     _max = TELEGRAM_MAX - 150
     sections = merge_for_telegram(chunk_text(body, _max))

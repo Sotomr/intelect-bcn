@@ -6,7 +6,7 @@ Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (
 
 | Objectiu | Estat |
 |----------|--------|
-| **Vàries fonts**, no una sola institució | Integrades: **Guia** (CSV), **CCCB**, **CIDOB**, **7 RSS** (IEC, SCM, MACBA, Ateneu, Hangar, Mies, Enginyers BCN). **Gencat** preparat però buit (sense API). |
+| **Vàries fonts**, no una sola institució | Integrades: **Guia** (CSV), **CCCB**, **CIDOB**, **RSS institucional** (per defecte: IEC, SCM, MACBA, Ateneu, Hangar, Mies, Enginyers; sense mitjans fins que `RSS_FEED_SET=all`). **Gencat** preparat però buit (sense API). |
 | **Llegible per temes** (filosofia, política, ciència…) | El digest va per **àmbit** (`classify_area`), barrejant fonts; cada línia indica **pipeline** (`Guia BCN`, `CCCB`, `RSS·…`). |
 | **Menys soroll** (cinema repetit, etc.) | Filtre per títols tipus **D’A / Festival de Cinema de Barcelona**; mateix acte diversos dies **agrupat** en un interval. |
 | **Robustesa** (xarxa, CSV gran) | HTTP: **reintents** i timeout de lectura configurable (`HTTP_READ_TIMEOUT`). Guia: **reintents** i UTF-16 amb fallback. |
@@ -20,7 +20,7 @@ Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (
 | Tipus | Fonts |
 |--------|--------|
 | **Dades obertes + scraping** | **Guia Barcelona** (CSV Open Data), **CCCB**, **CIDOB** |
-| **RSS** (configurable) | **IEC**, **SCM**, **MACBA**, **Ateneu**, **Hangar**, **Mies**, **Col·legi d’Enginyers BCN** — llista editable a `src/scrapers/rss_feeds.py` |
+| **RSS** (configurable) | **Per defecte (`all`):** IEC, SCM, MACBA, Ateneu, Hangar, Mies, Enginyers + Ara Cultura, Betevé, Directa, El Crític, Rezero (amb filtre estricte d'agenda). `RSS_FEED_SET=institutional` per excloure mitjans — veure `src/scrapers/rss_feeds.py`. |
 | **Stub** | **Agenda Cultural Gencat** (fins tenir API o export) |
 
 El **catàleg complet** de totes les fonts previstes (ETSO) i el seu estat (`integrada` / `rss` / `pendent`) és a **`src/source_catalog.py`**. Les que encara no entren al pipeline solen ser per Cloudflare, falta de feed estable o web només amb calendari visual.
@@ -48,7 +48,7 @@ Prova sense enviar res:
 DRY_RUN=1 python src/main.py
 ```
 
-Variables útils: `WINDOW_DAYS`, `MAX_EVENTS_PER_INSTITUTION`, `MAX_BASE_EVENTS`, `APPEND_NOVELTIES`, `RSS_ENABLED`, `RSS_MAX_PER_FEED`, `HTTP_READ_TIMEOUT`, `HTTP_MAX_ATTEMPTS`, `GUIA_CSV_URL`, `CCCB_CALENDAR_URL`, `CIDOB_ACTIVITIES_URL`.
+Variables útils: `WINDOW_DAYS`, `MAX_EVENTS_PER_INSTITUTION`, `MAX_BASE_EVENTS`, `APPEND_NOVELTIES`, `RSS_ENABLED`, `RSS_MAX_PER_FEED`, `RSS_FEED_SET` (`institutional` \| `all` \| `media`), `HTTP_READ_TIMEOUT`, `HTTP_MAX_ATTEMPTS`, `GUIA_CSV_URL`, `CCCB_CALENDAR_URL`, `CIDOB_ACTIVITIES_URL`.
 
 ## GitHub Actions
 

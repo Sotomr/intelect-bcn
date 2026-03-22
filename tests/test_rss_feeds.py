@@ -7,6 +7,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 
+def test_rss_feeds_for_set_filters_institutional_vs_media():
+    from scrapers.rss_feeds import RSS_FEEDS, rss_feeds_for_set
+
+    assert len(rss_feeds_for_set("all")) == len(RSS_FEEDS)
+    inst = rss_feeds_for_set("institutional")
+    assert all(f.kind == "institutional" for f in inst)
+    assert len(inst) < len(RSS_FEEDS)
+    media = rss_feeds_for_set("media")
+    assert {f.source_id for f in media} >= {"ara_cultura", "beteve"}
+
+
 def test_rss_builds_events(monkeypatch):
     class E:
         title = "Conferència sobre filosofia política"

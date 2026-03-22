@@ -26,8 +26,10 @@ class RssFeed:
     feed_url: str
     institution: str
     tier: str
-    """Si True, només es conserven entrades que passin el filtre d’«alta densitat intel·lectual»."""
+    # Si True: només entrades que passin el filtre d’«alta densitat intel·lectual».
     apply_intellect_filter: bool
+    # institutional = agenda / institució; media = premsa (veure RSS_FEED_SET).
+    kind: str = "institutional"
 
 
 # User-Agent «navegador» per reduir 403 en alguns mitjans; Accept explícit per Atom/RSS.
@@ -43,6 +45,8 @@ _HTTP_HEADERS = {
 }
 
 # Fonts amb RSS públic i estable (ampliïs aquí quan trobeu nous feeds vàlids).
+# kind=institutional: agenda / institució (producte per defecte).
+# kind=media: premsa / mitjà; només entren si RSS_FEED_SET=all o media (veure config).
 # Nota: molts sites bloquegen feedparser sense User-Agent; es baixa amb requests.
 RSS_FEEDS: tuple[RssFeed, ...] = (
     RssFeed("iec", "https://www.iec.cat/feed/", "Institut d’Estudis Catalans", "nerd", False),
@@ -58,17 +62,56 @@ RSS_FEEDS: tuple[RssFeed, ...] = (
         "nerd",
         True,
     ),
-    # Mitjans i cultura (verificats HTTP 200 amb les capçaleres del projecte).
-    RssFeed("directa", "https://directa.cat/feed", "Directa", "nerd", True),
-    RssFeed("el_critic", "https://www.elcritic.cat/feed/", "El Crític", "nerd", True),
-    RssFeed("ara_cultura", "https://www.ara.cat/rss/cultura/", "Ara Cultura", "nerd", True),
-    RssFeed("beteve", "https://beteve.cat/feed/", "Betevé", "nerd", True),
-    RssFeed("rezero", "https://rezero.cat/feed/", "Rezero", "nerd", True),
+    # Mitjans (feed general o cultura; barreja notícies + actes — filtre agenda més estricte a rss_event_filter).
+    RssFeed("directa", "https://directa.cat/feed", "Directa", "nerd", True, kind="media"),
+    RssFeed("el_critic", "https://www.elcritic.cat/feed/", "El Crític", "nerd", True, kind="media"),
+    RssFeed("ara_cultura", "https://www.ara.cat/rss/cultura/", "Ara Cultura", "nerd", True, kind="media"),
+    RssFeed("beteve", "https://beteve.cat/feed/", "Betevé", "nerd", True, kind="media"),
+    RssFeed("rezero", "https://rezero.cat/feed/", "Rezero", "nerd", True, kind="media"),
 )
+
+
+def rss_feeds_for_set(feed_set: str) -> tuple[RssFeed, ...]:
+    """Selecciona subconjunts de RSS_FEEDS segons política de fonts (veure RSS_FEED_SET)."""
+    fs = (feed_set or "institutional").strip().lower()
+    if fs in ("all", "*", "tot"):
+        return RSS_FEEDS
+    if fs == "media":
+        return tuple(f for f in RSS_FEEDS if f.kind == "media")
+    if fs in ("institutional", "institucional", "agenda"):
+        return tuple(f for f in RSS_FEEDS if f.kind == "institutional")
+    logger.warning("RSS_FEED_SET desconegut (%r); faig servir institutional", feed_set)
+    return tuple(f for f in RSS_FEEDS if f.kind == "institutional")
 
 _ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 _DMY_DATE = re.compile(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b")
 _RE_HTML_TAG = re.compile(r"<[^>]+>")
+
+# Mesos en català i castellà per extreure dates com "14 de març" o "15 de abril de 2026"
+_MONTH_NAMES: dict[str, int] = {
+    "gener": 1, "enero": 1, "january": 1,
+    "febrer": 2, "febrero": 2, "february": 2,
+    "març": 3, "marzo": 3, "march": 3, "marc": 3,
+    "abril": 4, "april": 4,
+    "maig": 5, "mayo": 5, "may": 5,
+    "juny": 6, "junio": 6, "june": 6,
+    "juliol": 7, "julio": 7, "july": 7,
+    "agost": 8, "agosto": 8, "august": 8,
+    "setembre": 9, "septiembre": 9, "september": 9,
+    "octubre": 10, "october": 10,
+    "novembre": 11, "noviembre": 11, "november": 11,
+    "desembre": 12, "diciembre": 12, "december": 12,
+}
+_MONTH_PATTERN = "|".join(sorted(_MONTH_NAMES, key=len, reverse=True))
+# "14 de març", "14 de març de 2026", "14 d'abril 2026"
+_TEXT_DATE_RE = re.compile(
+    rf"\b(\d{{1,2}})\s+(?:de\s+|d['\u2019])?({_MONTH_PATTERN})"
+    rf"(?:\s+(?:de(?:l)?\s+)?(\d{{4}}))?",
+    re.IGNORECASE,
+)
+
+# Màxim d'antiguitat (dies) d'una pub. RSS per considerar-la «recent» i incloure-la al digest.
+_RSS_RECENT_DAYS = 14
 
 
 def _strip_html(raw: str) -> str:
@@ -103,8 +146,8 @@ def _rss_today() -> date:
         return datetime.now(timezone.utc).date()
 
 
-def _extract_dates_from_text(text: str) -> list[date]:
-    """Dates explícites al títol o resum (l’acte sol ser futur; la pub. del feed sovint és passada)."""
+def _extract_dates_from_text(text: str, *, ref_year: int | None = None) -> list[date]:
+    """Dates al títol/resum: ISO, DD/MM/YYYY i noms de mes en català/castellà/anglès."""
     out: list[date] = []
     for m in _ISO_DATE.finditer(text):
         try:
@@ -116,6 +159,18 @@ def _extract_dates_from_text(text: str) -> list[date]:
             d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
             out.append(date(y, mo, d))
         except ValueError:
+            continue
+    year = ref_year or _rss_today().year
+    for m in _TEXT_DATE_RE.finditer(text):
+        try:
+            d = int(m.group(1))
+            mon_s = m.group(2).lower()
+            mo = _MONTH_NAMES.get(mon_s)
+            if not mo:
+                continue
+            y = int(m.group(3)) if m.group(3) else year
+            out.append(date(y, mo, d))
+        except (ValueError, TypeError):
             continue
     return out
 
@@ -151,7 +206,13 @@ def _pick_event_date(e: object, title: str, summary: str) -> str | None:
         return min(upcoming).isoformat()
     feed_ds = _dates_from_feed_entry(e)
     if feed_ds:
-        return max(feed_ds).isoformat()
+        pub = max(feed_ds)
+        if pub >= today:
+            return pub.isoformat()
+        if pub >= today - timedelta(days=_RSS_RECENT_DAYS):
+            # Publicació recent sense data d’acte explícita: usa avui perquè entri a la finestra.
+            return today.isoformat()
+        return pub.isoformat()
     return None
 
 
@@ -218,16 +279,19 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
                 area=classify_area(title, spec.institution, "RSS"),
                 summary=plain_for_item,
                 source=f"rss:{spec.source_id}",
+                rss_source_kind=spec.kind,
             )
         )
     logger.info("RSS %s: %s entrades (després de filtres)", spec.source_id, n)
     return out
 
 
-def fetch_rss_feeds(*, max_per_feed: int = 25) -> list[EventItem]:
+def fetch_rss_feeds(*, max_per_feed: int = 25, feed_set: str = "institutional") -> list[EventItem]:
     timeout = _rss_http_timeout()
     out: list[EventItem] = []
-    feeds = list(RSS_FEEDS)
+    feeds = list(rss_feeds_for_set(feed_set))
+    if not feeds:
+        logger.warning("RSS: cap feed amb feed_set=%r (revisa RSS_FEED_SET)", feed_set)
     workers = min(8, len(feeds))
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
