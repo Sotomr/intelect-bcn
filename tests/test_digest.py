@@ -52,3 +52,5 @@ def test_digest_merges_same_title_multiday():
     assert "25/03–27/03" in html
     assert "3 sessions" in html
     assert html.count("Utopies, distopies i imaginació política") == 1
+    assert "Política i geopolítica" in html
+    assert "CCCB" in html

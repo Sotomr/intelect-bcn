@@ -9,14 +9,36 @@ from zoneinfo import ZoneInfo
 
 from models import EventItem
 
-# Ordre de seccions al missatge: primer la resta de fonts, el CCCB i similars al final
-# (si no, el bloc «premium» omple el primer missatge de Telegram i sembla «només CCCB»).
+# Ordenació interna (finestra, límits base); el digest es mostra per **temes** (area), no per capa.
 _TIER_ORDER = ("nerd", "base", "premium")
-_TIER_TITLE = {
-    "premium": "Institucions destacades (sales fortes)",
-    "nerd": "Recerca, política i ciència (RSS, IEC, SCM…)",
-    "base": "Radar Guia Barcelona (ajuntament, altres sales)",
-}
+
+# Ordre de les seccions temàtiques al missatge (totes les fonts barrejades dins cada tema).
+_AREA_SECTION_ORDER = (
+    "Filosofia i humanitats",
+    "Política i geopolítica",
+    "Ciència i tecnologia",
+    "Literatura i idees",
+    "Art i cultura visual",
+    "General (idees)",
+)
+
+
+def _tier_rank(tier: str) -> int:
+    return _TIER_ORDER.index(tier) if tier in _TIER_ORDER else 9
+
+
+def _source_badge(e: EventItem) -> str:
+    """Etiqueta curta de pipeline (Guia, CCCB, RSS…) per veure d’on ve cada línia."""
+    s = (e.source or "").strip()
+    if s.startswith("rss:"):
+        rid = s[4:]
+        return f"RSS·{html.escape(rid)}"
+    labels = {
+        "guia_bcn": "Guia BCN",
+        "cccb": "CCCB",
+        "cidob": "CIDOB",
+    }
+    return html.escape(labels.get(s, s or "?"))
 
 
 def _parse_event_date(e: EventItem) -> date | None:
@@ -46,7 +68,7 @@ def filter_events_in_window(
             out.append(e)
     out.sort(
         key=lambda x: (
-            _TIER_ORDER.index(x.tier) if x.tier in _TIER_ORDER else 9,
+            _tier_rank(x.tier),
             x.starts_at or "",
             x.area,
             x.institution,
@@ -105,7 +127,7 @@ def _limit_base(events: list[EventItem], max_base: int) -> list[EventItem]:
     merged = non_base + base
     merged.sort(
         key=lambda x: (
-            _TIER_ORDER.index(x.tier) if x.tier in _TIER_ORDER else 9,
+            _tier_rank(x.tier),
             x.starts_at or "",
             x.area,
             x.institution,
@@ -133,62 +155,68 @@ def build_digest_html(
         "<b>Intelect BCN</b> — selecció setmanal",
         f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())} · "
         f"idees, ciència, política, cultura (finestra {window_days} dies)</i>",
+        "<i>Organitzat per <b>temes</b>; en cada bloc hi ha barreja de fonts (Guia, RSS, CIDOB, sales…). "
+        "La darrera etiqueta indica el pipeline.</i>",
         "",
     ]
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra (o fonts buides).")
         return "\n".join(lines)
 
-    by_tier: dict[str, list[EventItem]] = {t: [] for t in _TIER_ORDER}
+    by_area: dict[str, list[EventItem]] = defaultdict(list)
     for e in events:
-        if e.tier in by_tier:
-            by_tier[e.tier].append(e)
-        else:
-            by_tier.setdefault("base", []).append(e)
+        by_area[e.area].append(e)
 
-    for tier in _TIER_ORDER:
-        chunk = by_tier.get(tier) or []
+    area_keys = [a for a in _AREA_SECTION_ORDER if by_area.get(a)]
+    rest = sorted(k for k in by_area.keys() if k not in _AREA_SECTION_ORDER)
+    ordered_areas = area_keys + rest
+
+    for area in ordered_areas:
+        chunk = by_area.get(area) or []
         if not chunk:
             continue
-        lines.append(f"<b>{_TIER_TITLE.get(tier, tier)}</b>")
-        by_area: dict[str, list[EventItem]] = {}
+        lines.append(f"<b>{html.escape(area)}</b>")
+        chunk.sort(
+            key=lambda x: (
+                x.starts_at or "",
+                _tier_rank(x.tier),
+                x.institution,
+                x.title,
+            )
+        )
+        inst_map: defaultdict[str, list[EventItem]] = defaultdict(list)
         for e in chunk:
-            by_area.setdefault(e.area, []).append(e)
-
-        for area in sorted(by_area.keys()):
-            lines.append(f"<u>{html.escape(area)}</u>")
-            inst_map: defaultdict[str, list[EventItem]] = defaultdict(list)
-            for e in by_area[area]:
-                inst_map[e.institution].append(e)
-            for inst in sorted(inst_map.keys()):
-                raw_sorted = sorted(inst_map[inst], key=lambda e: e.starts_at or "")
-                clusters = _cluster_same_title_same_inst(raw_sorted)
-                shown = clusters[:max_per_institution]
-                for cluster in shown:
-                    e0 = cluster[0]
-                    when = (
-                        _fmt_date_range(cluster)
-                        if len(cluster) > 1
-                        else _fmt_day(e0.starts_at or "")
-                    )
-                    title = html.escape(e0.title)
-                    link = html.escape(e0.url, quote=True)
-                    summ = html.escape((e0.summary or e0.title)[:200])
-                    inst_h = html.escape(e0.institution)
-                    extra = ""
-                    if len(cluster) > 1:
-                        extra = f' · <i>{len(cluster)} sessions</i>'
-                    lines.append(
-                        f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst_h}</i>{extra}'
-                        f"\n  <i>{summ}</i>"
-                    )
-                total = len(clusters)
-                if total > max_per_institution:
-                    n = total - max_per_institution
-                    lines.append(
-                        f"  <i>… i {n} més a {html.escape(inst)} (web)</i>"
-                    )
-            lines.append("")
+            inst_map[e.institution].append(e)
+        for inst in sorted(inst_map.keys()):
+            raw_sorted = sorted(inst_map[inst], key=lambda e: e.starts_at or "")
+            clusters = _cluster_same_title_same_inst(raw_sorted)
+            shown = clusters[:max_per_institution]
+            for cluster in shown:
+                e0 = cluster[0]
+                when = (
+                    _fmt_date_range(cluster)
+                    if len(cluster) > 1
+                    else _fmt_day(e0.starts_at or "")
+                )
+                title = html.escape(e0.title)
+                link = html.escape(e0.url, quote=True)
+                summ = html.escape((e0.summary or e0.title)[:200])
+                inst_h = html.escape(e0.institution)
+                src = _source_badge(e0)
+                extra = ""
+                if len(cluster) > 1:
+                    extra = f' · <i>{len(cluster)} sessions</i>'
+                lines.append(
+                    f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst_h}</i> · <i>{src}</i>{extra}'
+                    f"\n  <i>{summ}</i>"
+                )
+            total = len(clusters)
+            if total > max_per_institution:
+                n = total - max_per_institution
+                lines.append(
+                    f"  <i>… i {n} més a {html.escape(inst)} (web)</i>"
+                )
+        lines.append("")
 
     if failures:
         lines.append("<b>Fonts amb error</b>")

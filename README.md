@@ -7,12 +7,12 @@ Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (
 | Tipus | Fonts |
 |--------|--------|
 | **Dades obertes + scraping** | **Guia Barcelona** (CSV Open Data), **CCCB**, **CIDOB** |
-| **RSS** (configurable) | **IEC**, **SCM**, **MACBA**, **Ateneu**, **Hangar**, **Mies** — llista editable a `src/scrapers/rss_feeds.py` |
+| **RSS** (configurable) | **IEC**, **SCM**, **MACBA**, **Ateneu**, **Hangar**, **Mies**, **Col·legi d’Enginyers BCN** — llista editable a `src/scrapers/rss_feeds.py` |
 | **Stub** | **Agenda Cultural Gencat** (fins tenir API o export) |
 
 El **catàleg complet** de totes les fonts previstes (ETSO) i el seu estat (`integrada` / `rss` / `pendent`) és a **`src/source_catalog.py`**. Les que encara no entren al pipeline solen ser per Cloudflare, falta de feed estable o web només amb calendari visual.
 
-Capes al missatge (ordre al Telegram): **nerd** (RSS) → **base** (Guia, altres sales) → **premium** (CCCB, MACBA…), perquè no quedi tot el primer missatge només amb CCCB.
+El digest va **per temes** (filosofia, política, ciència…), barrejant totes les fonts; cada línia indica el pipeline (`Guia BCN`, `CCCB`, `RSS·iec`, etc.).
 
 Documentació: `docs/FONTS.md`, preferències IA: `docs/AI_CONTEXT.md`.
 

@@ -217,6 +217,10 @@ def classify_area(title: str, institution: str, label: str = "") -> str:
             "icfo",
             "iccub",
             "cosmocaixa",
+            "enginy",
+            "enginyer",
+            "energia",
+            "sostenibilitat",
         )
     ):
         return "Ciència i tecnologia"

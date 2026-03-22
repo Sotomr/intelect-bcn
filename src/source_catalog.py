@@ -42,6 +42,7 @@ FONTS: tuple[Font, ...] = (
     Font("cidob", "CIDOB", EstatFont.integrada, "Llistat activitats"),
     Font("ub_filosofia", "Facultat de Filosofia UB", EstatFont.pendent, "Liferay; cal ICS o API"),
     Font("bcn_pensa", "Barcelona Pensa", EstatFont.pendent, "Temporada; cal dates d’edició"),
+    Font("enginyers_bcn", "Col·legi d’Enginyers de Barcelona", EstatFont.rss, "Feed WordPress (enginyersbcn.cat)"),
     Font("iec", "Institut d’Estudis Catalans", EstatFont.rss, "Feed WordPress"),
     Font("bnc", "Biblioteca de Catalunya", EstatFont.pendent, "Cal agenda web o ICS"),
     Font("la_central", "Llibreria La Central", EstatFont.pendent, "Cal agenda / events"),

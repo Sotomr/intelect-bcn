@@ -38,6 +38,13 @@ RSS_FEEDS: tuple[RssFeed, ...] = (
     RssFeed("ateneu", "https://ateneubcn.cat/feed/", "Ateneu Barcelonès", "premium", True),
     RssFeed("hangar", "https://www.hangar.org/feed/", "Hangar", "premium", False),
     RssFeed("mies", "https://www.miesbcn.com/ca/feed/", "Fundació Mies van der Rohe", "premium", True),
+    RssFeed(
+        "enginyers_bcn",
+        "https://enginyersbcn.cat/feed/",
+        "Col·legi d’Enginyers de Barcelona",
+        "nerd",
+        True,
+    ),
 )
 
 
@@ -59,7 +66,7 @@ def fetch_rss_feeds(*, max_per_feed: int = 25) -> list[EventItem]:
         try:
             r = requests.get(
                 spec.feed_url,
-                timeout=60,
+                timeout=(15, 90),
                 headers=_HTTP_HEADERS,
             )
             r.raise_for_status()
