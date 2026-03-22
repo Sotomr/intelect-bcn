@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -66,15 +67,19 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
                 lambda: fetch_rss_feeds(max_per_feed=settings.rss_max_per_feed),
             )
         )
-    for name, fn in jobs:
-        try:
-            got = fn()
-            events.extend(got)
-            logger.info("%s: %s esdeveniments", name, len(got))
-        except Exception as e:
-            msg = f"{name}: {e}"
-            logger.exception("Scraper falla: %s", name)
-            failures.append(msg)
+    workers = min(5, len(jobs))
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        future_to_name = {ex.submit(fn): name for name, fn in jobs}
+        for fut in as_completed(future_to_name):
+            name = future_to_name[fut]
+            try:
+                got = fut.result()
+                events.extend(got)
+                logger.info("%s: %s esdeveniments", name, len(got))
+            except Exception as e:
+                msg = f"{name}: {e}"
+                logger.exception("Scraper falla: %s", name)
+                failures.append(msg)
     events = filter_noise_events(events)
     events = dedupe_events(events)
     logger.info("Total després de deduplicar: %s", len(events))

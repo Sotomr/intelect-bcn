@@ -39,9 +39,9 @@ def _max_http_attempts() -> int:
 
 
 def _backoff_seconds(attempt: int, *, gateway: bool) -> float:
-    """Pausa entre intents; gateway (504) abans era massa agressiu i allargava Actions diversos minuts."""
+    """Pausa entre intents; 504 sovint és cache/gateway; no cal esperar 30–35 s cada cop."""
     if gateway:
-        return min(8.0 * attempt, 35.0)
+        return min(5.0 * attempt, 22.0)
     return min(4.0 * attempt, 25.0)
 
 
@@ -50,6 +50,7 @@ def fetch_text(
     timeout: float | tuple[float, float] | None = None,
     *,
     max_attempts: int | None = None,
+    extra_headers: dict[str, str] | None = None,
 ) -> str:
     """
     GET amb reintents: 504/502/503/429, timeouts i errors de connexió.
@@ -60,10 +61,11 @@ def fetch_text(
     if max_attempts is None:
         max_attempts = _max_http_attempts()
     max_attempts = max(1, int(max_attempts))
+    headers = {**DEFAULT_HEADERS, **(extra_headers or {})}
 
     for attempt in range(1, max_attempts + 1):
         try:
-            r = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+            r = requests.get(url, headers=headers, timeout=timeout)
             if r.status_code in _RETRY_STATUS:
                 gw = r.status_code in (502, 503, 504)
                 logger.warning(

@@ -133,5 +133,11 @@ def _parse_cccb_calendar(html: str) -> list[EventItem]:
 
 def fetch_cccb_events(calendar_url: str) -> list[EventItem]:
     logger.info("CCCB: baixant %s", calendar_url)
-    html = fetch_text(calendar_url)
+    html = fetch_text(
+        calendar_url,
+        extra_headers={
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+        },
+    )
     return _parse_cccb_calendar(html)

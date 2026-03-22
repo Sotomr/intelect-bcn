@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,3 +49,46 @@ def test_rss_builds_events(monkeypatch):
     assert len(evs) == 1
     assert evs[0].url == "https://example.org/e1"
     assert evs[0].starts_at == "2026-03-25"
+
+
+def test_rss_prefers_event_date_in_title_over_publication(monkeypatch):
+    class E:
+        title = "Cicle: xerrada el 28/03/2026 — tema"
+        link = "https://example.org/e2"
+        summary = ""
+        published_parsed = time.struct_time((2026, 3, 10, 12, 0, 0, 0, 0, 0))
+
+    class D:
+        entries = [E()]
+        bozo = False
+
+    import scrapers.rss_feeds as rf
+
+    class FakeResp:
+        content = b"<rss/>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    monkeypatch.setattr(rf.requests, "get", lambda url, timeout=60, headers=None: FakeResp())
+    monkeypatch.setattr(rf.feedparser, "parse", lambda data: D())
+    monkeypatch.setattr(rf, "_rss_today", lambda: date(2026, 3, 22))
+
+    from scrapers.rss_feeds import RssFeed
+
+    monkeypatch.setattr(
+        rf,
+        "RSS_FEEDS",
+        (
+            RssFeed(
+                "test2",
+                "https://example.org/feed2",
+                "Test Institution",
+                "premium",
+                False,
+            ),
+        ),
+    )
+    evs = rf.fetch_rss_feeds(max_per_feed=10)
+    assert len(evs) == 1
+    assert evs[0].starts_at == "2026-03-28"

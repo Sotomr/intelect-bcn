@@ -14,15 +14,20 @@ concurrency:
   group: intelect-bcn
   cancel-in-progress: false
 
+env:
+  # Actions basades en JS: compatibilitat amb el canvi a Node 24 (2026)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   run-digest:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -35,6 +40,13 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # El runner és UTC; fixem zona igual que en local (finestra de dates coherent)
+          TIMEZONE: Europe/Madrid
+          # CCCB sovint 504: reintents ràpids sense bloquejar 5–10 min
+          HTTP_READ_TIMEOUT: "75"
+          HTTP_MAX_ATTEMPTS: "4"
+          GUIA_CSV_TIMEOUT: "120"
+          RSS_HTTP_READ_TIMEOUT: "55"
         run: python src/main.py
 
       - name: Commit snapshot i registre de novetats

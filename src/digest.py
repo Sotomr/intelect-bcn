@@ -170,7 +170,9 @@ def build_digest_html(
                 f"<b>Cap acte dins la finestra de dates.</b> S’han recuperat "
                 f"<b>{total_before_window}</b> esdeveniments de fonts que han respost, "
                 f"però cap amb data dins els pròxims <b>{window_days}</b> dies (avui inclòs). "
-                "Puja <code>WINDOW_DAYS</code> o revisa <code>TIMEZONE</code>."
+                "Puja <code>WINDOW_DAYS</code>, revisa <code>TIMEZONE</code> "
+                "(el workflow ha de tenir <code>TIMEZONE=Europe/Madrid</code>) "
+                "i recorda que als RSS la data de l’acte s’extreu del títol/resum quan hi ha format <code>DD/MM/AAAA</code> o ISO."
             )
         elif total_before_window is not None and total_before_window == 0:
             lines.append(

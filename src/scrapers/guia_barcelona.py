@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import logging
+import os
 import re
 import time
 from datetime import date, datetime
@@ -64,6 +65,16 @@ def _row_key(row: dict[str, Any]) -> str | None:
     return digits or None
 
 
+def _guia_csv_timeout() -> tuple[float, float]:
+    raw = (os.getenv("GUIA_CSV_TIMEOUT") or "").strip()
+    if raw.isdigit():
+        read_s = float(raw)
+    else:
+        read_s = 120.0
+    read_s = max(30.0, min(300.0, read_s))
+    return (25.0, read_s)
+
+
 def _decode_utf16_csv(raw: bytes) -> str:
     """CSV oficial ve en UTF-16 LE amb BOM; bytes truncats o corruptes trencaven el decoder estricte."""
     if len(raw) < 4:
@@ -94,7 +105,7 @@ def _download_csv_bytes(url: str, *, max_attempts: int = 4) -> bytes:
         try:
             r = requests.get(
                 url,
-                timeout=300,
+                timeout=_guia_csv_timeout(),
                 headers=_HEADERS,
                 stream=True,
             )
