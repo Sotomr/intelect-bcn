@@ -12,7 +12,7 @@ Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (
 
 El **catàleg complet** de totes les fonts previstes (ETSO) i el seu estat (`integrada` / `rss` / `pendent`) és a **`src/source_catalog.py`**. Les que encara no entren al pipeline solen ser per Cloudflare, falta de feed estable o web només amb calendari visual.
 
-Capes al missatge: **premium**, **nerd**, **base** (veure digest).
+Capes al missatge (ordre al Telegram): **nerd** (RSS) → **base** (Guia, altres sales) → **premium** (CCCB, MACBA…), perquè no quedi tot el primer missatge només amb CCCB.
 
 Documentació: `docs/FONTS.md`, preferències IA: `docs/AI_CONTEXT.md`.
 

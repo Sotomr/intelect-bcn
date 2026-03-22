@@ -63,7 +63,7 @@ def load_settings() -> Settings:
         append_novelties=append_n,
         window_days=max(1, _int_env("WINDOW_DAYS", 7)),
         max_events_per_institution=max(1, _int_env("MAX_EVENTS_PER_INSTITUTION", 12)),
-        max_base_events=max(0, _int_env("MAX_BASE_EVENTS", 18)),
+        max_base_events=max(0, _int_env("MAX_BASE_EVENTS", 32)),
         guia_csv_url=os.getenv(
             "GUIA_CSV_URL",
             "https://opendata-ajuntament.barcelona.cat/data/dataset/"

@@ -9,11 +9,13 @@ from zoneinfo import ZoneInfo
 
 from models import EventItem
 
-_TIER_ORDER = ("premium", "nerd", "base")
+# Ordre de seccions al missatge: primer la resta de fonts, el CCCB i similars al final
+# (si no, el bloc «premium» omple el primer missatge de Telegram i sembla «només CCCB»).
+_TIER_ORDER = ("nerd", "base", "premium")
 _TIER_TITLE = {
-    "premium": "Institucions destacades",
-    "nerd": "Recerca, política i ciència",
-    "base": "Radar Guia Barcelona (dades obertes, filtrat)",
+    "premium": "Institucions destacades (sales fortes)",
+    "nerd": "Recerca, política i ciència (RSS, IEC, SCM…)",
+    "base": "Radar Guia Barcelona (ajuntament, altres sales)",
 }
 
 
