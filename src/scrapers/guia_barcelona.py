@@ -16,7 +16,7 @@ from intellect_filters import (
     text_matches_intellect_blob,
     venue_tier_boost,
 )
-from models import EventItem
+from models import EventItem, classify_event_kind
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +212,8 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
             area=area,
             summary=_short_summary(name),
             source="guia_bcn",
+            event_kind=classify_event_kind(name),
+            confidence="high",
         )
         events.append(ev)
     logger.info("Guia Barcelona (CSV): %s candidats després del filtre intel·lectual", len(events))

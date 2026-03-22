@@ -101,6 +101,6 @@ def load_settings() -> Settings:
         rss_enabled=os.getenv("RSS_ENABLED", "1").lower() not in ("0", "false", "no"),
         rss_max_per_feed=max(1, _int_env("RSS_MAX_PER_FEED", 25)),
         rss_feed_set=_rss_feed_set(),
-        digest_highlight_count=max(3, min(12, _int_env("DIGEST_HIGHLIGHT_COUNT", 7))),
+        digest_highlight_count=max(3, min(12, _int_env("DIGEST_HIGHLIGHT_COUNT", 5))),
         digest_max_per_source_highlights=max(1, min(6, _int_env("DIGEST_MAX_PER_SOURCE", 3))),
     )

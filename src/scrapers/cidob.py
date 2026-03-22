@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 
 from http_client import fetch_text
-from models import EventItem
+from models import EventItem, classify_event_kind
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +100,8 @@ def _parse_cidob_listing(html: str, base: str) -> list[EventItem]:
                 area="Política i món",
                 summary=_short_summary(title),
                 source="cidob",
+                event_kind=classify_event_kind(title),
+                confidence="high" if d else "low",
             )
         )
 
@@ -129,6 +131,8 @@ def _parse_cidob_listing(html: str, base: str) -> list[EventItem]:
                 area="Política i món",
                 summary=_short_summary(title),
                 source="cidob",
+                event_kind=classify_event_kind(title),
+                confidence="high" if d else "low",
             )
         )
 

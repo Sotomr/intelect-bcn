@@ -4,12 +4,13 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from editorial import display_source_line, editorial_score, pick_highlights, source_bucket  # noqa: E402
+from editorial import display_source_line  # noqa: E402
+from selector import score_event, select_candidates  # noqa: E402
 from models import EventItem  # noqa: E402
 
 
-def test_highlights_quality_first_no_forced_diversity():
-    """Una visita de baixa puntuació NO entra als destacats només per diversitat de fonts."""
+def test_selector_quality_first():
+    """Visites no entren als destacats."""
     cccb = [
         EventItem(
             institution="CCCB",
@@ -17,63 +18,68 @@ def test_highlights_quality_first_no_forced_diversity():
             url=f"https://cccb.org/d{i}",
             starts_at="2026-03-25",
             tier="premium",
-            label="Debats",
             source="cccb",
+            event_kind="debat",
+            confidence="high",
         )
         for i in range(6)
     ]
     guia_visita = EventItem(
         institution="Museu de prova",
-        title="Visita al museu (prova editorial)",
+        title="Visita al museu",
         url="https://guia.barcelona.cat/ca/agenda/visita-test",
         starts_at="2026-03-25",
         tier="base",
-        label="Guia Barcelona",
         source="guia_bcn",
+        event_kind="visita",
+        confidence="high",
     )
-    hi, _rest = pick_highlights(cccb + [guia_visita], k=7, max_per_source=3)
-    assert not any(e.source == "guia_bcn" for e in hi)
+    hi, _rest = select_candidates(cccb + [guia_visita], max_highlights=5, max_per_source=3)
+    assert not any(r.event.source == "guia_bcn" for r in hi)
 
 
-def test_cccb_quota_in_highlights():
+def test_selector_source_quota():
     evs = [
         EventItem(
             institution="CCCB",
-            title=f"Acte CCCB {i}",
+            title=f"Debat CCCB {i}",
             url=f"https://cccb.org/{i}",
             starts_at="2026-03-25",
             tier="premium",
-            area="Política i món",
             source="cccb",
+            event_kind="debat",
+            confidence="high",
         )
         for i in range(10)
     ]
     evs.append(
         EventItem(
             institution="CIDOB",
-            title="Debat geopolítica",
+            title="Debat geopolítica CIDOB",
             url="https://cidob.org/1",
             starts_at="2026-03-25",
             tier="nerd",
-            area="Política i món",
             source="cidob",
+            event_kind="debat",
+            confidence="high",
         )
     )
-    hi, rest = pick_highlights(evs, k=7, max_per_source=3)
-    assert len(hi) <= 7
-    assert sum(1 for e in hi if source_bucket(e) == "cccb") <= 3
-    assert any(e.source == "cidob" for e in hi)
+    hi, rest = select_candidates(evs, max_highlights=5, max_per_source=3)
+    assert len(hi) <= 5
+    cccb_hi = sum(1 for r in hi if r.event.source == "cccb")
+    assert cccb_hi <= 3
 
 
-def test_visit_scores_lower_than_debate():
+def test_debate_scores_higher_than_visit():
     debat = EventItem(
         institution="CCCB",
         title="Debat sobre democràcia",
         url="https://cccb.org/d",
         starts_at="2026-03-25",
         tier="premium",
-        label="Debats",
         source="cccb",
+        event_kind="debat",
+        confidence="high",
     )
     visita = EventItem(
         institution="CCCB",
@@ -81,13 +87,16 @@ def test_visit_scores_lower_than_debate():
         url="https://cccb.org/v",
         starts_at="2026-03-25",
         tier="premium",
-        label="Visites",
         source="cccb",
+        event_kind="visita",
+        confidence="high",
     )
-    assert editorial_score(debat) > editorial_score(visita)
+    assert score_event(debat) > score_event(visita)
+
+
 def test_display_source_line_shows_institution_only():
     e = EventItem(
-        institution="Institut d’Estudis Catalans",
+        institution="Institut d'Estudis Catalans",
         title="Taula rodona",
         url="https://iec.cat/x",
         starts_at="2026-03-25",
@@ -98,3 +107,20 @@ def test_display_source_line_shows_institution_only():
     assert "via RSS" not in line
     assert "RSS mitjà" not in line
     assert "Institut" in line
+
+
+def test_selector_editorial_phrase():
+    e = EventItem(
+        institution="CIDOB",
+        title="Conferència sobre geopolítica i Europa",
+        url="https://cidob.org/conf",
+        starts_at="2026-03-25",
+        tier="nerd",
+        source="cidob",
+        event_kind="conferencia",
+        confidence="high",
+    )
+    hi, _ = select_candidates([e], max_highlights=5)
+    assert len(hi) == 1
+    assert hi[0].editorial_phrase
+    assert len(hi[0].editorial_phrase) > 10

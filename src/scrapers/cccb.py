@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from intellect_filters import classify_area
 from http_client import fetch_text
-from models import EventItem
+from models import EventItem, classify_event_kind
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,8 @@ def _parse_cccb_calendar(html: str) -> list[EventItem]:
                     area=classify_area(title, "CCCB", label),
                     summary=summ,
                     source="cccb",
+                    event_kind=classify_event_kind(title, label),
+                    confidence="high",
                 )
             )
 

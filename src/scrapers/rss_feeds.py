@@ -14,7 +14,7 @@ import feedparser
 import requests
 
 from intellect_filters import classify_area, text_matches_intellect_blob
-from models import EventItem
+from models import EventItem, classify_event_kind
 from rss_event_filter import rss_entry_is_valid_event
 
 logger = logging.getLogger(__name__)
@@ -209,9 +209,6 @@ def _pick_event_date(e: object, title: str, summary: str) -> str | None:
         pub = max(feed_ds)
         if pub >= today:
             return pub.isoformat()
-        if pub >= today - timedelta(days=_RSS_RECENT_DAYS):
-            # Publicació recent sense data d’acte explícita: usa avui perquè entri a la finestra.
-            return today.isoformat()
         return pub.isoformat()
     return None
 
@@ -267,6 +264,11 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
             link=link,
         ):
             continue
+        kind = classify_event_kind(title, "", f"rss:{spec.source_id}")
+        has_explicit_date = bool(
+            _extract_dates_from_text(f"{title}\n{summary_plain}")
+        )
+        conf = "high" if has_explicit_date else "medium"
         out.append(
             EventItem(
                 institution=spec.institution,
@@ -280,6 +282,8 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
                 summary=plain_for_item,
                 source=f"rss:{spec.source_id}",
                 rss_source_kind=spec.kind,
+                event_kind=kind,
+                confidence=conf,
             )
         )
     logger.info("RSS %s: %s entrades (després de filtres)", spec.source_id, n)

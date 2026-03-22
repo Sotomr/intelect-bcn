@@ -12,9 +12,8 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from config import load_settings
-from intellect_filters import filter_noise_events
 from dedupe import dedupe_events
-from rss_event_filter import filter_product_events
+from validation import validate_events
 from digest import (
     build_digest_html,
     filter_events_in_window,
@@ -26,6 +25,7 @@ from scrapers.cccb import fetch_cccb_events
 from scrapers.cidob import fetch_cidob_events
 from scrapers.gencat import fetch_gencat_placeholder
 from scrapers.guia_barcelona import fetch_guia_barcelona_csv
+from scrapers.iccub import fetch_iccub_events
 from scrapers.rss_feeds import fetch_rss_feeds
 from seen_store import (
     compute_novelties,
@@ -60,6 +60,7 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str], dict[str, int]]
         ("Gencat", lambda: fetch_gencat_placeholder()),
         ("CCCB", lambda: fetch_cccb_events(settings.cccb_calendar_url)),
         ("CIDOB", lambda: fetch_cidob_events(settings.cidob_activities_url)),
+        ("ICCUB", lambda: fetch_iccub_events()),
     ]
     if settings.rss_enabled:
         jobs.append(
@@ -71,7 +72,7 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str], dict[str, int]]
                 ),
             )
         )
-    workers = min(5, len(jobs))
+    workers = min(8, len(jobs))
     with ThreadPoolExecutor(max_workers=workers) as ex:
         future_to_name = {ex.submit(fn): name for name, fn in jobs}
         for fut in as_completed(future_to_name):
@@ -88,11 +89,9 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str], dict[str, int]]
     scraper_counts_merged: dict[str, int] = dict(
         Counter((e.source or "?") for e in events)
     )
-    events = filter_noise_events(events)
+    events = validate_events(events)
     events = dedupe_events(events)
-    logger.info("Total després de deduplicar: %s", len(events))
-    events = filter_product_events(events)
-    logger.info("Total després de filtres de producte (no-agenda / soroll): %s", len(events))
+    logger.info("Total després de validació + dedup: %s", len(events))
     return events, failures, scraper_counts_merged
 
 

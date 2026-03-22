@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
@@ -22,6 +24,11 @@ class EventItem:
     source: str = ""
     # Només RSS: "institutional" | "media" (buit = no RSS o llegat sense camp)
     rss_source_kind: str = ""
+    # Tipus d'acte: debat, conferencia, seminari, taller, exposicio, visita,
+    # projeccio, xerrada, presentacio, sessio (buit = no classificat encara)
+    event_kind: str = ""
+    # Confiança que és un acte real: high, medium, low
+    confidence: str = "low"
 
     def stable_key(self) -> str:
         return f"{self.source}|{self.url}|{self.starts_at or ''}"
@@ -40,6 +47,8 @@ class EventItem:
             "summary": self.summary,
             "source": self.source,
             "rss_source_kind": self.rss_source_kind or "",
+            "event_kind": self.event_kind or "",
+            "confidence": self.confidence or "low",
         }
 
     @staticmethod
@@ -57,7 +66,46 @@ class EventItem:
             summary=d.get("summary") or "",
             source=d.get("source") or "",
             rss_source_kind=d.get("rss_source_kind") or "",
+            event_kind=d.get("event_kind") or "",
+            confidence=d.get("confidence") or "low",
         )
+
+
+def _nkind(s: str) -> str:
+    s = (s or "").lower()
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def classify_event_kind(title: str, label: str = "", source: str = "") -> str:
+    """Classifica el tipus d'acte a partir del títol i label (slug curt)."""
+    t = _nkind(f"{title} {label}")
+    if "debat" in t or "debats" in t:
+        return "debat"
+    if "col.loqui" in t or "col·loqui" in t or "coloquio" in t:
+        return "debat"
+    if "conferencia" in t:
+        return "conferencia"
+    if "seminari" in t or "seminario" in t:
+        return "seminari"
+    if "xerrada" in t or "convers" in t or "tertulia" in t:
+        return "xerrada"
+    if "presentacio" in t:
+        return "presentacio"
+    if "visita guiada" in t or (t.startswith("visita ") and "exposici" in t):
+        return "visita"
+    if "visita" in t or "mirador" in t:
+        return "visita"
+    if "taller" in t or "curs " in t or " curs" in t:
+        return "taller"
+    if "projeccio" in t or "documental" in t or "audiovisual" in t or "simfonies" in t:
+        return "projeccio"
+    if "exposicio" in t or "exposicion" in t:
+        return "exposicio"
+    if source.startswith("rss:") and "entrevista" in t:
+        return "article"
+    return "sessio"
 
 
 @dataclass
