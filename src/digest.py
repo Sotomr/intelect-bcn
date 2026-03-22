@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import re
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from typing import Iterable
@@ -58,6 +59,40 @@ def _fmt_day(iso: str) -> str:
         return iso
     y, m, d = iso[:10].split("-")
     return f"{d}/{m}"
+
+
+def _norm_title_key(title: str) -> str:
+    t = re.sub(r"\s+", " ", (title or "").strip().lower())
+    return t
+
+
+def _cluster_same_title_same_inst(events: list[EventItem]) -> list[list[EventItem]]:
+    """
+    Agrupa esdeveniments amb mateix títol (i ja comparteixen institució dins el grup).
+    Ordena grups per data del primer dia.
+    """
+    by_key: dict[str, list[EventItem]] = defaultdict(list)
+    for e in events:
+        by_key[_norm_title_key(e.title)].append(e)
+    clusters: list[list[EventItem]] = []
+    for _k, evs in by_key.items():
+        evs = sorted(evs, key=lambda x: x.starts_at or "")
+        clusters.append(evs)
+    clusters.sort(key=lambda g: g[0].starts_at or "")
+    return clusters
+
+
+def _fmt_date_range(cluster: list[EventItem]) -> str:
+    days: list[str] = []
+    for e in cluster:
+        if e.starts_at and len(e.starts_at) >= 10:
+            days.append(e.starts_at[:10])
+    if not days:
+        return ""
+    days = sorted(set(days))
+    if len(days) == 1:
+        return _fmt_day(days[0])
+    return f"{_fmt_day(days[0])}–{_fmt_day(days[-1])}"
 
 
 def _limit_base(events: list[EventItem], max_base: int) -> list[EventItem]:
@@ -124,20 +159,28 @@ def build_digest_html(
             for e in by_area[area]:
                 inst_map[e.institution].append(e)
             for inst in sorted(inst_map.keys()):
-                sub = sorted(inst_map[inst], key=lambda e: e.starts_at or "")[
-                    :max_per_institution
-                ]
-                for e in sub:
-                    when = _fmt_day(e.starts_at or "")
-                    title = html.escape(e.title)
-                    link = html.escape(e.url, quote=True)
-                    summ = html.escape((e.summary or e.title)[:200])
-                    inst_h = html.escape(e.institution)
+                raw_sorted = sorted(inst_map[inst], key=lambda e: e.starts_at or "")
+                clusters = _cluster_same_title_same_inst(raw_sorted)
+                shown = clusters[:max_per_institution]
+                for cluster in shown:
+                    e0 = cluster[0]
+                    when = (
+                        _fmt_date_range(cluster)
+                        if len(cluster) > 1
+                        else _fmt_day(e0.starts_at or "")
+                    )
+                    title = html.escape(e0.title)
+                    link = html.escape(e0.url, quote=True)
+                    summ = html.escape((e0.summary or e0.title)[:200])
+                    inst_h = html.escape(e0.institution)
+                    extra = ""
+                    if len(cluster) > 1:
+                        extra = f' · <i>{len(cluster)} sessions</i>'
                     lines.append(
-                        f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst_h}</i>'
+                        f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst_h}</i>{extra}'
                         f"\n  <i>{summ}</i>"
                     )
-                total = len(inst_map[inst])
+                total = len(clusters)
                 if total > max_per_institution:
                     n = total - max_per_institution
                     lines.append(
