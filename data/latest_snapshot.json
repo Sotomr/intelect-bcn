@@ -1,19 +1,6 @@
 {
-  "fetched_at": "2026-03-22T15:43:03.478440+00:00",
+  "fetched_at": "2026-03-22T15:46:45.647747+00:00",
   "events": [
-    {
-      "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-22",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "22/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "source": "cccb"
-    },
     {
       "institution": "CCCB",
       "title": "Visita el Mirador del CCCB 2026",
@@ -51,32 +38,6 @@
       "tier": "premium",
       "area": "General (idees)",
       "summary": "David Uclés i Elisenda Solsona. Debats Rodoreda, un bosc",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-23",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "23/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-24",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "24/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
       "source": "cccb"
     },
     {
@@ -133,19 +94,6 @@
     },
     {
       "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-25",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "25/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
       "title": "Utopies, distopies i imaginació política",
       "url": "https://www.cccb.org/ca/w/activitats/utopies-distopies-i-imaginacio-politica",
       "starts_at": "2026-03-25",
@@ -168,19 +116,6 @@
       "tier": "premium",
       "area": "Filosofia i humanitats",
       "summary": "Cossos, dades i mercat. Cursos i tallers Institut d’Humanitats",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-26",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "26/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
       "source": "cccb"
     },
     {
@@ -224,19 +159,6 @@
     },
     {
       "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-27",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "27/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
       "title": "Estrena de «Simfonies de ciutat» 2026",
       "url": "https://www.cccb.org/ca/w/activitats/estrena-de-simfonies-de-ciutat-2026",
       "starts_at": "2026-03-27",
@@ -259,19 +181,6 @@
       "tier": "premium",
       "area": "Política i geopolítica",
       "summary": "Utopies, distopies i imaginació política. Debats",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
-      "title": "D’A - Festival de Cinema de Barcelona 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/da-festival-de-cinema-de-barcelona-2026",
-      "starts_at": "2026-03-28",
-      "ends_at": null,
-      "label": "Audiovisuals D’A - Festival de Cinema de Barcelona",
-      "raw_date": "28/03/2026",
-      "tier": "premium",
-      "area": "General (idees)",
-      "summary": "D’A - Festival de Cinema de Barcelona 2026. Audiovisuals D’A - Festival de Cinema de Barcelona",
       "source": "cccb"
     }
   ]
