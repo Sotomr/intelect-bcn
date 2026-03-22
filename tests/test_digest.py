@@ -54,4 +54,6 @@ def test_digest_merges_same_title_multiday():
     assert "Utopies, distopies i imaginació política" in html
     assert "Política i món" in html
     assert "Destacats de la setmana" in html
+    assert "Radar:" in html
+    assert "CCCB:" in html
     assert "CCCB" in html

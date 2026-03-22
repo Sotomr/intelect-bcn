@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html as html_lib
 import logging
 import os
 import re
@@ -28,9 +29,16 @@ class RssFeed:
     apply_intellect_filter: bool
 
 
+# User-Agent «navegador» per reduir 403 en alguns mitjans; Accept explícit per Atom/RSS.
 _HTTP_HEADERS = {
-    "User-Agent": "intelect-bcn/1.0 (+https://github.com/Sotomr/intelect-bcn)",
-    "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+    "User-Agent": (
+        "Mozilla/5.0 (compatible; intelect-bcn/1.0; +https://github.com/Sotomr/intelect-bcn) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    ),
+    "Accept": (
+        "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5"
+    ),
+    "Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8,en;q=0.7",
 }
 
 # Fonts amb RSS públic i estable (ampliïs aquí quan trobeu nous feeds vàlids).
@@ -49,23 +57,39 @@ RSS_FEEDS: tuple[RssFeed, ...] = (
         "nerd",
         True,
     ),
-    # Mitjans i cultura (Barcelona / País); filtres d’«alta densitat» actius on cal.
+    # Mitjans i cultura (verificats HTTP 200 amb les capçaleres del projecte).
     RssFeed("directa", "https://directa.cat/feed", "Directa", "nerd", True),
     RssFeed("el_critic", "https://www.elcritic.cat/feed/", "El Crític", "nerd", True),
-    RssFeed("nuvol", "https://www.nuvol.com/feed/", "Núvol", "nerd", True),
-    RssFeed("bonart", "https://www.bonart.cat/feed/", "Bonart", "nerd", True),
-    # Ciència i museu (si el feed falla per 403/404, es registra i es continua)
-    RssFeed(
-        "cosmocaixa",
-        "https://www.cosmocaixa.org/ca/-/feed",
-        "CosmoCaixa Barcelona",
-        "premium",
-        True,
-    ),
+    RssFeed("ara_cultura", "https://www.ara.cat/rss/cultura/", "Ara Cultura", "nerd", True),
+    RssFeed("beteve", "https://beteve.cat/feed/", "Betevé", "nerd", True),
+    RssFeed("rezero", "https://rezero.cat/feed/", "Rezero", "nerd", True),
 )
 
 _ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 _DMY_DATE = re.compile(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b")
+_RE_HTML_TAG = re.compile(r"<[^>]+>")
+
+
+def _strip_html(raw: str) -> str:
+    if not raw:
+        return ""
+    t = _RE_HTML_TAG.sub(" ", raw)
+    t = html_lib.unescape(t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def _entry_plain_summary(entry: object, title: str) -> str:
+    """Text pla per al digest (sense HTML); prioritza resum del feed."""
+    raw = (getattr(entry, "summary", None) or getattr(entry, "description", None) or "") or ""
+    if not raw.strip() and getattr(entry, "content", None):
+        c = entry.content
+        if isinstance(c, list) and c:
+            raw = (c[0].get("value") if isinstance(c[0], dict) else str(c[0])) or ""
+    plain = _strip_html(str(raw))
+    if len(plain) < 35:
+        return title[:400]
+    return plain[:420] + ("…" if len(plain) > 420 else "")
 
 
 def _rss_today() -> date:
@@ -167,10 +191,12 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
             title, summary[:2000]
         ):
             continue
-        day = _pick_event_date(e, title, summary)
+        summary_plain = _strip_html(summary)
+        day = _pick_event_date(e, title, summary_plain)
         if not day:
             continue
         n += 1
+        plain_for_item = _entry_plain_summary(e, title)
         out.append(
             EventItem(
                 institution=spec.institution,
@@ -181,7 +207,7 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
                 raw_date=day,
                 tier=spec.tier,
                 area=classify_area(title, spec.institution, "RSS"),
-                summary=title[:200] + ("…" if len(title) > 200 else ""),
+                summary=plain_for_item,
                 source=f"rss:{spec.source_id}",
             )
         )

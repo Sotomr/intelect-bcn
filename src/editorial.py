@@ -212,6 +212,11 @@ def editorial_score(e: EventItem) -> float:
 def editorial_blurb(e: EventItem) -> str:
     t = _norm(f"{e.title} {e.label}")
     summ = (e.summary or "").strip()
+    title_n = _norm(e.title or "")
+    # Resum del feed (sobretot RSS ja net): aporta el «per què m’importa».
+    if summ and len(summ) > 50:
+        if _norm(summ[:140]) != _norm((e.title or "")[:140]):
+            return summ[:240] + ("…" if len(summ) > 240 else "")
     if "debat" in t or "debats" in t:
         return "Debat amb densitat; bon marc per seguir el fil argumental."
     if "conferència" in t or "conferencia" in t:
@@ -231,7 +236,7 @@ def editorial_blurb(e: EventItem) -> str:
     if "," in (e.title or "") and len(e.title or "") > 35:
         return "Taula amb diversos ponents; conversa amb pes específic."
     if summ and len(summ) > 25:
-        return summ[:200]
+        return summ[:200] + ("…" if len(summ) > 200 else "")
     return "Proposta dins el radar intel·lectual de la setmana."
 
 

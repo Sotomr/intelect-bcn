@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import html
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from typing import Iterable
 from zoneinfo import ZoneInfo
@@ -123,6 +123,28 @@ def _apply_areas(events: list[EventItem]) -> None:
         e.area = classify_area(e.title, e.institution, e.label)
 
 
+def _radar_summary_line(events: list[EventItem], failures: list[str]) -> str:
+    """Comptes per font + avís si alguna font ha fallat (informació ràpida al missatge)."""
+    c: Counter[str] = Counter()
+    for e in events:
+        s = (e.source or "").strip()
+        if s.startswith("rss:"):
+            c["RSS"] += 1
+        elif s == "cccb":
+            c["CCCB"] += 1
+        elif s == "guia_bcn":
+            c["Guia BCN"] += 1
+        elif s == "cidob":
+            c["CIDOB"] += 1
+        else:
+            c[s or "?"] += 1
+    parts = [f"{k}: {v}" for k, v in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
+    line = "<b>Radar:</b> " + str(len(events)) + " actes a la finestra — " + " · ".join(parts)
+    if failures:
+        line += f" · <i>{len(failures)} font(s) sense resposta (detall al final)</i>"
+    return line
+
+
 def _format_highlight_block(e: EventItem) -> str:
     when = _fmt_day(e.starts_at or "")
     fmt = detect_format_label(e)
@@ -183,6 +205,9 @@ def build_digest_html(
         "després la resta per temes. Les visites genèriques cauen més avall.</i>",
         "",
     ]
+    if events:
+        lines.append(_radar_summary_line(events, failures))
+        lines.append("")
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra (o fonts buides).")
         return "\n".join(lines)
