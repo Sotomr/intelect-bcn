@@ -1,4 +1,135 @@
 {
-  "fetched_at": "2026-03-22T16:43:25.656002+00:00",
-  "events": []
+  "fetched_at": "2026-03-22T16:53:15.853940+00:00",
+  "events": [
+    {
+      "institution": "CCCB",
+      "title": "Visita el Mirador del CCCB 2026",
+      "url": "https://www.cccb.org/ca/w/activitats/visita-el-mirador-del-cccb-2026",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "",
+      "raw_date": "22/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "Visita el Mirador del CCCB 2026",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Escriptura i poder",
+      "url": "https://www.cccb.org/ca/w/activitats/escriptura-i-poder",
+      "starts_at": "2026-03-23",
+      "ends_at": null,
+      "label": "Cursos i tallers Institut d’Humanitats",
+      "raw_date": "23/03/2026",
+      "tier": "premium",
+      "area": "Filosofia i humanitats",
+      "summary": "Escriptura i poder. Cursos i tallers Institut d’Humanitats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Visita guiada a l'exposició «Rodoreda, un bosc»",
+      "url": "https://www.cccb.org/ca/w/activitats/visita-guiada-a-lexposicio-rodoreda-un-bosc",
+      "starts_at": "2026-03-24",
+      "ends_at": null,
+      "label": "Amics CCCB",
+      "raw_date": "24/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "Visita guiada a l'exposició «Rodoreda, un bosc». Amics CCCB",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "«Rodoreda, un bosc» per a persones amb ceguesa o baixa visió",
+      "url": "https://www.cccb.org/ca/w/activitats/rodoreda-un-bosc-per-a-persones-amb-ceguesa-o-baixa-visio",
+      "starts_at": "2026-03-24",
+      "ends_at": null,
+      "label": "Accessible Rodoreda, un bosc",
+      "raw_date": "24/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "«Rodoreda, un bosc» per a persones amb ceguesa o baixa visió. Accessible Rodoreda, un bosc",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Infanteses",
+      "url": "https://www.cccb.org/ca/w/activitats/infanteses",
+      "starts_at": "2026-03-25",
+      "ends_at": null,
+      "label": "Cursos i tallers Institut d’Humanitats",
+      "raw_date": "25/03/2026",
+      "tier": "premium",
+      "area": "Filosofia i humanitats",
+      "summary": "Infanteses. Cursos i tallers Institut d’Humanitats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Craig Calhoun, María Pía Lara i Camil Ungureanu",
+      "url": "https://www.cccb.org/ca/w/activitats/craig-calhoun-maria-pia-lara-i-prathama-banerjee",
+      "starts_at": "2026-03-25",
+      "ends_at": null,
+      "label": "Debats",
+      "raw_date": "25/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "Craig Calhoun, María Pía Lara i Camil Ungureanu. Debats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Cossos, dades i mercat",
+      "url": "https://www.cccb.org/ca/w/activitats/cossos-dades-i-mercat",
+      "starts_at": "2026-03-26",
+      "ends_at": null,
+      "label": "Cursos i tallers Institut d’Humanitats",
+      "raw_date": "26/03/2026",
+      "tier": "premium",
+      "area": "Filosofia i humanitats",
+      "summary": "Cossos, dades i mercat. Cursos i tallers Institut d’Humanitats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Estrena de «Simfonies de ciutat» 2026",
+      "url": "https://www.cccb.org/ca/w/activitats/estrena-de-simfonies-de-ciutat-2026",
+      "starts_at": "2026-03-26",
+      "ends_at": null,
+      "label": "Audiovisuals Simfonies de ciutat",
+      "raw_date": "26/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Michel Nieva",
+      "url": "https://www.cccb.org/ca/w/activitats/michel-nieva",
+      "starts_at": "2026-03-26",
+      "ends_at": null,
+      "label": "Debats",
+      "raw_date": "26/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "Michel Nieva. Debats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Estrena de «Simfonies de ciutat» 2026",
+      "url": "https://www.cccb.org/ca/w/activitats/estrena-de-simfonies-de-ciutat-2026",
+      "starts_at": "2026-03-27",
+      "ends_at": null,
+      "label": "Audiovisuals Simfonies de ciutat",
+      "raw_date": "27/03/2026",
+      "tier": "premium",
+      "area": "General (idees)",
+      "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
+      "source": "cccb"
+    }
+  ]
 }
