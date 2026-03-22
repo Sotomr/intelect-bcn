@@ -100,11 +100,14 @@ _LIFESTYLE = (
 # Entrevistes / cinema sense cita (patrons típics de peça, no agenda).
 _INTERVIEW_OR_FEATURE = (
     "sento que hi ha una connexió",
+    "sento que hi ha una connexion",
     "entrevista exclusiva",
     "reportatge",
     "la història d'amor",
     "història d'amor de",
     "icones d'estil",
+    "carla simón",
+    "carla simon",
 )
 
 # Senyals forts que SÍ és un acte / sessió programada.
@@ -130,7 +133,7 @@ _EVENT_STRONG = (
     "inauguracion",
     "estrena ",
     "estreno ",
-    "festival d'a",
+    # «festival d'a» sol aparèixer en articles retrospectius (D'A 2011…); no com a senyal sol.
     "entrades a la venda",
     "entrades esgotades",
     "inscripció",
@@ -163,6 +166,21 @@ def _url_suggests_event(link: str) -> bool:
     return any(h in u for h in _URL_EVENT_HINTS)
 
 
+def _retrospective_culture_article(blob: str) -> bool:
+    """Crònica / record de festival o descoberta passada (no cita futura)."""
+    if "el 2011" in blob and ("festival" in blob or "cinema" in blob or "públic" in blob):
+        return True
+    if "va descobrir" in blob and "públic" in blob:
+        return True
+    if "primera edició del festival" in blob or "primera edicio del festival" in blob:
+        return True
+    if "des d'aleshores" in blob and "festival" in blob:
+        return True
+    if "mia hansen" in blob and "2011" in blob:
+        return True
+    return False
+
+
 def _global_exclude(blob: str) -> bool:
     if any(x in blob for x in _SPORT_OR_RESULT):
         return True
@@ -171,6 +189,8 @@ def _global_exclude(blob: str) -> bool:
     if any(x in blob for x in _LIFESTYLE):
         return True
     if any(x in blob for x in _INTERVIEW_OR_FEATURE):
+        return True
+    if _retrospective_culture_article(blob):
         return True
     # Dansa / festival ja tancat (crònica d’assistència).
     if "dansa metropolitana" in blob and "tanca" in blob:
@@ -189,6 +209,9 @@ def _strict_agenda_ok(blob: str, link: str) -> bool:
     """Per mitjans: cal senyal d’agenda o URL d’activitat; es barren titulars de premsa sols."""
     if _url_suggests_event(link):
         return True
+    # Article retrospectiu amb parla de festival però sense cita: fora.
+    if _retrospective_culture_article(blob):
+        return False
     if _has_strong_event_signal(blob):
         return True
     # Pedralbes històric = article, no cita.

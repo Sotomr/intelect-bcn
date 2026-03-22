@@ -34,6 +34,24 @@ def test_keeps_conference_ara():
     )
 
 
+def test_rejects_carla_simon_interview_ara():
+    assert not rss_entry_is_valid_event(
+        source_id="ara_cultura",
+        title="“Sento que hi ha una connexió entre el cinema de Carla Simón i el meu”",
+        summary="El 2011 el públic català va descobrir el cinema de Mia Hansen-Love en la primera edició del Festival D'A.",
+        link="https://ara.cat/cultura/x",
+    )
+
+
+def test_rejects_retrospective_festival_article():
+    assert not rss_entry_is_valid_event(
+        source_id="ara_cultura",
+        title="Record del Festival D'A",
+        summary="Des d'aleshores, tant el festival com la cin…",
+        link="https://ara.cat/x",
+    )
+
+
 def test_institutional_feed_allows_without_strict_url():
     assert rss_entry_is_valid_event(
         source_id="iec",

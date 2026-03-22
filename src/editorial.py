@@ -29,7 +29,9 @@ AREA_SECTION_ORDER: tuple[str, ...] = (
     "Tecnologia i computació",
     "Art i cultura crítica",
     "Literatura i idees",
-    "Ciutat i institucions",
+    "Cultura visual i ciutat",
+    "Mediació i accés (exposició)",
+    "Cultura i espai públic",
 )
 
 
@@ -122,9 +124,13 @@ def classify_area(title: str, institution: str, label: str = "") -> str:
         return "Art i cultura crítica"
     if any(x in blob for x in ("literatura", "llibre", "presentació del llibre", "poèt", "narrativ", "assaig")):
         return "Literatura i idees"
-    if any(x in blob for x in ("visita", "mirador", "portes obertes", "accessible")):
-        return "Ciutat i institucions"
-    return "Ciutat i institucions"
+    if any(x in blob for x in ("ceguesa", "baixa visió", "baixa vision")) and "exposici" in blob:
+        return "Mediació i accés (exposició)"
+    if any(x in blob for x in ("simfonies de ciutat", "simfonies", "estrena de «")):
+        return "Cultura visual i ciutat"
+    if any(x in blob for x in ("visita", "mirador", "portes obertes")):
+        return "Cultura i espai públic"
+    return "Cultura i espai públic"
 
 
 def _title_key(title: str) -> str:
@@ -164,11 +170,17 @@ def detect_format_label(e: EventItem) -> str:
         return "Visita"
     if "taller" in t or "curs " in t or " curs" in t:
         return "Taller / curs"
+    if "simfonies" in t or ("estrena" in t and ("audiovisual" in t or "ciutat" in t)):
+        return "Projecció audiovisual"
     if "projecció" in t or "documental" in t or "audiovisual" in t:
         return "Audiovisual"
     if "exposició" in t or "exposicion" in t:
         return "Exposició"
-    return "Activitat"
+    if "connexió" in t and "cinema" in t:
+        return "Conversa / peça de mitjà"
+    if (e.source or "").startswith("rss:") and "entrevista" in t:
+        return "Conversa / peça de mitjà"
+    return "Sessió o programa"
 
 
 def editorial_score(e: EventItem) -> float:
@@ -183,11 +195,13 @@ def editorial_score(e: EventItem) -> float:
         "Xerrada": 10.0,
         "Presentació": 9.0,
         "Taller / curs": 5.0,
+        "Projecció audiovisual": 5.0,
         "Exposició": 4.0,
         "Audiovisual": 3.0,
+        "Conversa / peça de mitjà": -22.0,
         "Visita guiada": -6.0,
         "Visita": -14.0,
-        "Activitat": 2.0,
+        "Sessió o programa": 1.0,
     }
     s += fmt_bonus.get(fmt, 0.0)
     tb = _norm(e.title)
@@ -196,7 +210,9 @@ def editorial_score(e: EventItem) -> float:
     if "mirador" in tb:
         s -= 12.0
     if "accessible" in tb and "exposici" in tb:
-        s -= 6.0
+        s -= 18.0
+    if "ceguesa" in tb or "baixa visió" in tb:
+        s -= 14.0
     if "portes obertes" in tb:
         s -= 8.0
     src = (e.source or "")
@@ -211,48 +227,44 @@ def editorial_score(e: EventItem) -> float:
     return s
 
 
+def _clip_text(text: str, max_len: int = 280) -> str:
+    text = (text or "").strip()
+    if len(text) <= max_len:
+        return text
+    cut = text[: max_len - 1].rsplit(" ", 1)[0]
+    return cut + "…"
+
+
+def _summary_adds_value(summ: str, title: str) -> bool:
+    if not summ or len(summ) < 48:
+        return False
+    if _norm(summ[: min(110, len(summ))]) == _norm((title or "")[: min(110, len(title or ""))]):
+        return False
+    return True
+
+
 def editorial_blurb(e: EventItem) -> str:
-    t = _norm(f"{e.title} {e.label}")
+    """
+    Sense plantilles amb noms propis: prioritza el text que ve de la font (resum),
+    si no, munta una sola franja amb etiqueta + format + títol (tot dinàmic).
+    """
     summ = (e.summary or "").strip()
-    title_n = _norm(e.title or "")
-    lab = _norm(e.label or "")
-    # Debats CCCB amb ponents (títol només amb noms): abans que el resum dupliqui el títol.
-    if "debat" in t or "debats" in t:
-        if any(x in t for x in ("calhoun", "ungureanu", "lara")):
-            return (
-                "Debat amb ponents de referència en teoria política i filosofia social; "
-                "marc útil per pensar democràcia i esfera pública."
-            )
-        if "nieva" in t:
-            return "Debat poètic i literari dins el cicle del CCCB; bon to si et mou la paraula en escena."
-        if "," in (e.title or "") and len((e.title or "").split(",")) >= 2:
-            return "Taula amb diversos ponents; conversa amb pes específic al voltant del tema del cicle."
-        return "Debat amb densitat; convé mirar el fil del cicle («Debats») per situar el marc."
-    if "conferència" in t or "conferencia" in t:
-        return "Conferència amb cos; útil per situar conceptes i autors."
-    if "seminari" in t or "col·loqui" in t:
-        return "Format seminarial: aprofundiment i intercanvi."
-    if "taller" in t or " curs" in t or "curs " in t or "institut d'humanitats" in t:
-        return (
-            "Taller o curs del CCCB (Institut d’Humanitats): útil si vols aprofundir en el tema amb guia."
-        )
-    if "filosofia" in t or "pensament" in t or "humanitats" in t:
-        return "Filosofia i pensament crític al centre."
-    if "polític" in t or "democràcia" in t or "geopol" in t:
-        return "Política i idees: context actual i conceptes."
-    if "ciència" in t or "cosmolog" in t or "física" in t or "matemàt" in t:
-        return "Ciència i rigor conceptual."
-    if "literatura" in t or "llibre" in t:
-        return "Literatura i idees en primer pla."
-    if "visita" in t and "debat" not in t:
-        return "Activitat de descobriment; menys densitat de debat que una taula o conferència."
-    # Resum del feed (RSS): només si afegeix context respecte al títol.
-    if summ and len(summ) > 50:
-        if _norm(summ[:140]) != _norm((e.title or "")[:140]):
-            return summ[:240] + ("…" if len(summ) > 240 else "")
-    if lab and len(lab) > 3 and lab not in title_n:
-        return f"Marc: {e.label[:120]}{'…' if len(e.label or '') > 120 else ''}"
-    return "Proposta dins el radar intel·lectual de la setmana."
+    title = (e.title or "").strip()
+    lab = (e.label or "").strip()
+    if _summary_adds_value(summ, title):
+        return _clip_text(summ, 280)
+    fmt = detect_format_label(e)
+    chunks: list[str] = []
+    if lab and _norm(lab) not in _norm(title):
+        chunks.append(lab)
+    if fmt and fmt != "Sessió o programa":
+        chunks.append(fmt)
+    if title:
+        if chunks:
+            chunks.append(title)
+        else:
+            return _clip_text(title, 280)
+    return _clip_text(" · ".join(c for c in chunks if c), 280)
 
 
 def pick_highlights(
@@ -266,9 +278,10 @@ def pick_highlights(
     del millor de la setmana (no es reemplaça un CCCB fort per un RSS feble).
     Després, diversitat de fonts dins aquest pool.
     """
-    evs = list(events)
+    all_events = list(events)
+    evs = [e for e in all_events if detect_format_label(e) != "Conversa / peça de mitjà"]
     if not evs:
-        return [], []
+        return [], all_events
     scored_pairs = sorted(
         ((e, editorial_score(e)) for e in evs),
         key=lambda x: (-x[1], x[0].starts_at or "", x[0].title),
@@ -312,7 +325,7 @@ def pick_highlights(
             picked_titles.add(tk)
             counts[b] += 1
     keys = {e.stable_key() for e in picked}
-    rest = [e for e in evs if e.stable_key() not in keys]
+    rest = [e for e in all_events if e.stable_key() not in keys]
     rest.sort(key=lambda e: (-editorial_score(e), e.starts_at or "", e.title))
     picked.sort(key=lambda e: (-editorial_score(e), e.starts_at or "", e.title))
     return picked, rest
@@ -325,6 +338,13 @@ def split_agenda_expanded(rest: list[EventItem], *, score_threshold: float = 36.
     for e in rest:
         fmt = detect_format_label(e)
         sc = editorial_score(e)
+        tb = _norm(e.title)
+        if fmt == "Conversa / peça de mitjà":
+            low.append(e)
+            continue
+        if "ceguesa" in tb or "baixa visió" in tb or "baixa vision" in tb:
+            low.append(e)
+            continue
         if fmt in ("Visita", "Visita guiada"):
             low.append(e)
         elif sc < score_threshold:

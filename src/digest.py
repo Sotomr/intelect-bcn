@@ -206,8 +206,9 @@ def build_digest_html(
         "<b>Intelect BCN</b> — selecció setmanal",
         f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())} · "
         f"idees, ciència, política, cultura (finestra {window_days} dies)</i>",
-        "<i>Prescripció amb criteri: primer els <b>destacats</b> (puntuació + diversitat de fonts), "
-        "després la resta per temes. Les visites genèriques cauen més avall.</i>",
+        "<i>Prioritzem el text que publiquen les fonts (resum); sense plantilles fixes. "
+        "Destacats = millor puntuació dins la finestra + diversitat de fonts; "
+        "visites i mediació, més avall.</i>",
         "",
     ]
     if events:
