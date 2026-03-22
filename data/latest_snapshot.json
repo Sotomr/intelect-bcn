@@ -1,6 +1,97 @@
 {
-  "fetched_at": "2026-03-22T16:53:15.853940+00:00",
+  "fetched_at": "2026-03-22T17:06:24.868623+00:00",
   "events": [
+    {
+      "institution": "Ara Cultura",
+      "title": "La història d'amor de JFK Jr. i Carolyn Bessette, polèmica 26 anys després del seu accident letal",
+      "url": "https://www.ara.cat/gent/jfk-jr-carolyn-besssette-polemica-accident-aeri-addiccions-calvin-klein-serie-love-story-versions-ryan-murphy_1_5683630.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "Al juliol farà 27 anys que John Fitzgerald Kennedy Jr. i Carolyn Bessette van morir. Aquestes dues icones d'estil i absolutes celebritats per a tota una generació eren ja actualment dos absoluts desconeguts per als joves nascuts enllà de l'any 2000. Tanmateix, la sèrie que els ha dedicat Ryan Murphy, Love story (Disney+) , els ha ressuscitat de l'oblit en què havien caigut. Com sol passar amb els famosos que moren ab…",
+      "source": "rss:ara_cultura"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "Pedralbes: set segles de dones que van desafiar reis i perills",
+      "url": "https://diumenge.ara.cat/diumenge/pedralbes-set-segles-dones-desafiar-reis-perills_130_5677578.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "Darrere els murs de pedra del monestir de Pedralbes, durant set segles hi han viscut moltes generacions de dones. Cada corredor guarda moltes històries, no només de pregàries i de silencis introspectius, sinó també de pugnes, conspiracions, supervivència i creativitat. És una rara avis perquè ni les desamortitzacions, ni les revolucions ni les dictadures, ni tan sols la voracitat immobiliària, l’han pogut engolir. Qu…",
+      "source": "rss:ara_cultura"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "“Sento que hi ha una connexió entre el cinema de Carla Simón i el meu”",
+      "url": "https://www.ara.cat/cultura/cinema/mia-hansen-love-connexio-cinema-carla-simon_128_5686266.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "El 2011 el públic català va descobrir el cinema de Mia Hansen-Love en la primera edició del Festival D'A , que va presentar la segona pel·lícula de la directora francesa, Le père de mes enfants . Des d'aleshores, tant el festival com la cineasta han crescut en importància i són referents essencials per a qualsevol cinèfil. Per tant, el premi D'A que en aquesta 15a edició del festival ha rebut Hansen-Love té alguna co…",
+      "source": "rss:ara_cultura"
+    },
+    {
+      "institution": "Betevé",
+      "title": "Ada Parellada recull 30 anys de receptes del Semproniana: “Faig menú per militància”",
+      "url": "https://beteve.cat/estils-de-vida/ada-parellada-receptes-semproniana/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "La cuinera Ada Parellada ha recollit en un llibre les receptes que ha cuinat al restaurant Semproniana (Rosselló,148) durant més de 30 anys: Els plats del dia. El menú del Semproniana i altres anades d’olla. Un pas a pas de com elaborar els plats que han configurat el menú de migdia del restaurant, com el […]",
+      "source": "rss:beteve"
+    },
+    {
+      "institution": "Betevé",
+      "title": "El Barça ja és de Divisió d’Honor: victòria a la final contra el Túria",
+      "url": "https://beteve.cat/esports/barca-femeni-rugbi-divisio-honor/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "El Barça ha guanyat per 11-17 el Túria en la final del play-off d’ascens i ja és equip de Divisió d’Honor. L’assaig d’Elena Comadran en els darrers minuts de la segona part ha confirmat la victòria de les blaugrana, que tornen a la màxima competició després d’un any. El partit, que s’ha disputat al camp […]",
+      "source": "rss:beteve"
+    },
+    {
+      "institution": "Betevé",
+      "title": "La 9a edició del Dansa Metropolitana tanca amb més de 49.000 espectadors i prop de 400 activitats",
+      "url": "https://beteve.cat/cultura/dansa-metropolitana-2026-supera-49000-espectadors/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "La 9a edició del Festival Dansa Metropolitana s’ha desplegat a un total de 12 municipis i ha tancat amb un total de 49.180 espectadors. S’han programat 397 activitats, sumant les funcions i activitats de sala (17.000 assistents), de carrer (14.500), educatives (2.100), paral·leles (980) i de cinema (14.600). El tret de sortida va ser el […]",
+      "source": "rss:beteve"
+    },
+    {
+      "institution": "Betevé",
+      "title": "L’Espanyol B fa un servei al Sant Andreu i segueix a prop del play-off",
+      "url": "https://beteve.cat/esports/espanyol-b-fa-servei-sant-andreu-0-0-poblense/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciutat i institucions",
+      "summary": "L’Espanyol B ha empatat sense gols aquest diumenge contra la UD Poblense. Aquest resultat, a la jornada 28, situa els blanc-i-blaus a la vuitena posició amb 40 punts, a prop del play-off d’ascens a Primera Federació, però sense entrar-hi encara. Aquest resultat, però, li fa un gran favor a un altre equip barceloní. Un empat […]",
+      "source": "rss:beteve"
+    },
     {
       "institution": "CCCB",
       "title": "Visita el Mirador del CCCB 2026",
@@ -10,7 +101,7 @@
       "label": "",
       "raw_date": "22/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "Visita el Mirador del CCCB 2026",
       "source": "cccb"
     },
@@ -23,7 +114,7 @@
       "label": "Cursos i tallers Institut d’Humanitats",
       "raw_date": "23/03/2026",
       "tier": "premium",
-      "area": "Filosofia i humanitats",
+      "area": "Filosofia i pensament",
       "summary": "Escriptura i poder. Cursos i tallers Institut d’Humanitats",
       "source": "cccb"
     },
@@ -36,7 +127,7 @@
       "label": "Amics CCCB",
       "raw_date": "24/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "Visita guiada a l'exposició «Rodoreda, un bosc». Amics CCCB",
       "source": "cccb"
     },
@@ -49,21 +140,8 @@
       "label": "Accessible Rodoreda, un bosc",
       "raw_date": "24/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "«Rodoreda, un bosc» per a persones amb ceguesa o baixa visió. Accessible Rodoreda, un bosc",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
-      "title": "Infanteses",
-      "url": "https://www.cccb.org/ca/w/activitats/infanteses",
-      "starts_at": "2026-03-25",
-      "ends_at": null,
-      "label": "Cursos i tallers Institut d’Humanitats",
-      "raw_date": "25/03/2026",
-      "tier": "premium",
-      "area": "Filosofia i humanitats",
-      "summary": "Infanteses. Cursos i tallers Institut d’Humanitats",
       "source": "cccb"
     },
     {
@@ -75,21 +153,21 @@
       "label": "Debats",
       "raw_date": "25/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "Craig Calhoun, María Pía Lara i Camil Ungureanu. Debats",
       "source": "cccb"
     },
     {
       "institution": "CCCB",
-      "title": "Cossos, dades i mercat",
-      "url": "https://www.cccb.org/ca/w/activitats/cossos-dades-i-mercat",
-      "starts_at": "2026-03-26",
+      "title": "Infanteses",
+      "url": "https://www.cccb.org/ca/w/activitats/infanteses",
+      "starts_at": "2026-03-25",
       "ends_at": null,
       "label": "Cursos i tallers Institut d’Humanitats",
-      "raw_date": "26/03/2026",
+      "raw_date": "25/03/2026",
       "tier": "premium",
-      "area": "Filosofia i humanitats",
-      "summary": "Cossos, dades i mercat. Cursos i tallers Institut d’Humanitats",
+      "area": "Filosofia i pensament",
+      "summary": "Infanteses. Cursos i tallers Institut d’Humanitats",
       "source": "cccb"
     },
     {
@@ -101,7 +179,7 @@
       "label": "Audiovisuals Simfonies de ciutat",
       "raw_date": "26/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
       "source": "cccb"
     },
@@ -114,8 +192,21 @@
       "label": "Debats",
       "raw_date": "26/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "Michel Nieva. Debats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Cossos, dades i mercat",
+      "url": "https://www.cccb.org/ca/w/activitats/cossos-dades-i-mercat",
+      "starts_at": "2026-03-26",
+      "ends_at": null,
+      "label": "Cursos i tallers Institut d’Humanitats",
+      "raw_date": "26/03/2026",
+      "tier": "premium",
+      "area": "Tecnologia i computació",
+      "summary": "Cossos, dades i mercat. Cursos i tallers Institut d’Humanitats",
       "source": "cccb"
     },
     {
@@ -127,7 +218,7 @@
       "label": "Audiovisuals Simfonies de ciutat",
       "raw_date": "27/03/2026",
       "tier": "premium",
-      "area": "General (idees)",
+      "area": "Ciutat i institucions",
       "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
       "source": "cccb"
     }
