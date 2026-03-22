@@ -17,7 +17,7 @@ class EventItem:
     raw_date: str = ""
     # base = Guia/Gencat filtrat; premium = institucions fortes; nerd = recerca/política/CIència dura
     tier: str = "base"
-    area: str = "General (idees)"
+    area: str = "Ciutat i institucions"
     summary: str = ""
     source: str = ""
 
@@ -50,7 +50,7 @@ class EventItem:
             label=d.get("label") or "",
             raw_date=d.get("raw_date") or "",
             tier=d.get("tier") or "base",
-            area=d.get("area") or "General (idees)",
+            area=d.get("area") or "Ciutat i institucions",
             summary=d.get("summary") or "",
             source=d.get("source") or "",
         )

@@ -63,7 +63,7 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
     if settings.rss_enabled:
         jobs.append(
             (
-                "RSS (IEC, SCM, MACBA, Ateneu, Hangar, Mies, Enginyers BCN…)",
+                "RSS (IEC, SCM, MACBA, Ateneu, Directa, Núvol, CosmoCaixa…)",
                 lambda: fetch_rss_feeds(max_per_feed=settings.rss_max_per_feed),
             )
         )
@@ -121,6 +121,8 @@ def main() -> int:
         max_base_events=settings.max_base_events,
         failures=failures,
         total_before_window=len(raw_events),
+        highlight_count=settings.digest_highlight_count,
+        max_per_source_highlights=settings.digest_max_per_source_highlights,
     )
     _max = TELEGRAM_MAX - 150
     sections = merge_for_telegram(chunk_text(body, _max))

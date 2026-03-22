@@ -16,7 +16,7 @@ def test_digest_merges_same_title_multiday():
             url="https://www.cccb.org/a",
             starts_at="2026-03-25",
             tier="premium",
-            area="Política i geopolítica",
+            area="Política i món",
             summary="Debats",
             source="cccb",
         ),
@@ -26,7 +26,7 @@ def test_digest_merges_same_title_multiday():
             url="https://www.cccb.org/b",
             starts_at="2026-03-26",
             tier="premium",
-            area="Política i geopolítica",
+            area="Política i món",
             summary="Debats",
             source="cccb",
         ),
@@ -36,7 +36,7 @@ def test_digest_merges_same_title_multiday():
             url="https://www.cccb.org/c",
             starts_at="2026-03-27",
             tier="premium",
-            area="Política i geopolítica",
+            area="Política i món",
             summary="Debats",
             source="cccb",
         ),
@@ -49,8 +49,9 @@ def test_digest_merges_same_title_multiday():
         max_base_events=50,
         failures=[],
     )
-    assert "25/03–27/03" in html
-    assert "3 sessions" in html
-    assert html.count("Utopies, distopies i imaginació política") == 1
-    assert "Política i geopolítica" in html
+    # Un dia pot anar a «Destacats»; la resta es fusiona en «Altres recomanacions».
+    assert "sessions" in html
+    assert "Utopies, distopies i imaginació política" in html
+    assert "Política i món" in html
+    assert "Destacats de la setmana" in html
     assert "CCCB" in html

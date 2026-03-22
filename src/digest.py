@@ -7,38 +7,23 @@ from datetime import date, datetime, timedelta
 from typing import Iterable
 from zoneinfo import ZoneInfo
 
+from editorial import (
+    AREA_SECTION_ORDER,
+    classify_area,
+    detect_format_label,
+    display_source_line,
+    editorial_blurb,
+    editorial_score,
+    pick_highlights,
+    split_agenda_expanded,
+)
 from models import EventItem
 
-# Ordenació interna (finestra, límits base); el digest es mostra per **temes** (area), no per capa.
 _TIER_ORDER = ("nerd", "base", "premium")
-
-# Ordre de les seccions temàtiques al missatge (totes les fonts barrejades dins cada tema).
-_AREA_SECTION_ORDER = (
-    "Filosofia i humanitats",
-    "Política i geopolítica",
-    "Ciència i tecnologia",
-    "Literatura i idees",
-    "Art i cultura visual",
-    "General (idees)",
-)
 
 
 def _tier_rank(tier: str) -> int:
     return _TIER_ORDER.index(tier) if tier in _TIER_ORDER else 9
-
-
-def _source_badge(e: EventItem) -> str:
-    """Etiqueta curta de pipeline (Guia, CCCB, RSS…) per veure d’on ve cada línia."""
-    s = (e.source or "").strip()
-    if s.startswith("rss:"):
-        rid = s[4:]
-        return f"RSS·{html.escape(rid)}"
-    labels = {
-        "guia_bcn": "Guia BCN",
-        "cccb": "CCCB",
-        "cidob": "CIDOB",
-    }
-    return html.escape(labels.get(s, s or "?"))
 
 
 def _parse_event_date(e: EventItem) -> date | None:
@@ -91,10 +76,6 @@ def _norm_title_key(title: str) -> str:
 
 
 def _cluster_same_title_same_inst(events: list[EventItem]) -> list[list[EventItem]]:
-    """
-    Agrupa esdeveniments amb mateix títol (i ja comparteixen institució dins el grup).
-    Ordena grups per data del primer dia.
-    """
     by_key: dict[str, list[EventItem]] = defaultdict(list)
     for e in events:
         by_key[_norm_title_key(e.title)].append(e)
@@ -137,6 +118,45 @@ def _limit_base(events: list[EventItem], max_base: int) -> list[EventItem]:
     return merged
 
 
+def _apply_areas(events: list[EventItem]) -> None:
+    for e in events:
+        e.area = classify_area(e.title, e.institution, e.label)
+
+
+def _format_highlight_block(e: EventItem) -> str:
+    when = _fmt_day(e.starts_at or "")
+    fmt = detect_format_label(e)
+    title = html.escape(e.title)
+    link = html.escape(e.url, quote=True)
+    blurb = html.escape(editorial_blurb(e))
+    ctx = html.escape(display_source_line(e))
+    return (
+        f"<b>{when}</b> · <i>{html.escape(fmt)}</i>\n"
+        f"{ctx}\n"
+        f'<a href="{link}">{title}</a>\n'
+        f"<i>{blurb}</i>"
+    )
+
+
+def _format_theme_line(e0: EventItem, cluster: list[EventItem]) -> str:
+    when = (
+        _fmt_date_range(cluster)
+        if len(cluster) > 1
+        else _fmt_day(e0.starts_at or "")
+    )
+    title = html.escape(e0.title)
+    link = html.escape(e0.url, quote=True)
+    summ = html.escape((e0.summary or e0.title)[:220])
+    ctx = html.escape(display_source_line(e0))
+    extra = ""
+    if len(cluster) > 1:
+        extra = f' · <i>{len(cluster)} sessions</i>'
+    return (
+        f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{ctx}</i>{extra}\n'
+        f"  <i>{summ}</i>"
+    )
+
+
 def build_digest_html(
     events: list[EventItem],
     *,
@@ -146,18 +166,21 @@ def build_digest_html(
     max_base_events: int,
     failures: list[str],
     total_before_window: int | None = None,
+    highlight_count: int = 7,
+    max_per_source_highlights: int = 3,
 ) -> str:
     tz = ZoneInfo(tz_name)
     today = datetime.now(tz).date()
     end = today + timedelta(days=window_days - 1)
     events = _limit_base(events, max_base_events)
+    _apply_areas(events)
 
     lines: list[str] = [
         "<b>Intelect BCN</b> — selecció setmanal",
         f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())} · "
         f"idees, ciència, política, cultura (finestra {window_days} dies)</i>",
-        "<i>Organitzat per <b>temes</b>; en cada bloc hi ha barreja de fonts (Guia, RSS, CIDOB, sales…). "
-        "La darrera etiqueta indica el pipeline.</i>",
+        "<i>Prescripció amb criteri: primer els <b>destacats</b> (puntuació + diversitat de fonts), "
+        "després la resta per temes. Les visites genèriques cauen més avall.</i>",
         "",
     ]
     if not events and not failures:
@@ -187,60 +210,89 @@ def build_digest_html(
             )
         lines.append("")
 
-    by_area: dict[str, list[EventItem]] = defaultdict(list)
-    for e in events:
-        by_area[e.area].append(e)
-
-    area_keys = [a for a in _AREA_SECTION_ORDER if by_area.get(a)]
-    rest = sorted(k for k in by_area.keys() if k not in _AREA_SECTION_ORDER)
-    ordered_areas = area_keys + rest
-
-    for area in ordered_areas:
-        chunk = by_area.get(area) or []
-        if not chunk:
-            continue
-        lines.append(f"<b>{html.escape(area)}</b>")
-        chunk.sort(
-            key=lambda x: (
-                x.starts_at or "",
-                _tier_rank(x.tier),
-                x.institution,
-                x.title,
-            )
+    if events:
+        highlights, rest = pick_highlights(
+            events,
+            k=max(1, highlight_count),
+            max_per_source=max_per_source_highlights,
         )
-        inst_map: defaultdict[str, list[EventItem]] = defaultdict(list)
-        for e in chunk:
-            inst_map[e.institution].append(e)
-        for inst in sorted(inst_map.keys()):
-            raw_sorted = sorted(inst_map[inst], key=lambda e: e.starts_at or "")
-            clusters = _cluster_same_title_same_inst(raw_sorted)
-            shown = clusters[:max_per_institution]
-            for cluster in shown:
-                e0 = cluster[0]
-                when = (
-                    _fmt_date_range(cluster)
-                    if len(cluster) > 1
-                    else _fmt_day(e0.starts_at or "")
+        main_rest, expanded = split_agenda_expanded(rest)
+
+        lines.append("<b>Destacats de la setmana</b>")
+        lines.append(
+            "<i>Poques peces, màxima densitat; quotes per font per no ser només CCCB.</i>"
+        )
+        if highlights:
+            for e in highlights:
+                lines.append(_format_highlight_block(e))
+                lines.append("")
+        else:
+            lines.append("<i>(Cap entrada prou diferenciada; mira la secció següent.)</i>")
+            lines.append("")
+
+        if main_rest:
+            lines.append("<b>Altres recomanacions</b>")
+            lines.append("<i>Per temes; ordenat per rellevància editorial.</i>")
+            lines.append("")
+            by_area: dict[str, list[EventItem]] = defaultdict(list)
+            for e in main_rest:
+                by_area[e.area].append(e)
+            area_keys = [a for a in AREA_SECTION_ORDER if by_area.get(a)]
+            rest_areas = sorted(k for k in by_area.keys() if k not in AREA_SECTION_ORDER)
+            ordered_areas = area_keys + rest_areas
+
+            for area in ordered_areas:
+                chunk = by_area.get(area) or []
+                if not chunk:
+                    continue
+                lines.append(f"<b>{html.escape(area)}</b>")
+                chunk.sort(
+                    key=lambda x: (
+                        -editorial_score(x),
+                        x.starts_at or "",
+                        x.institution,
+                        x.title,
+                    )
                 )
-                title = html.escape(e0.title)
-                link = html.escape(e0.url, quote=True)
-                summ = html.escape((e0.summary or e0.title)[:200])
-                inst_h = html.escape(e0.institution)
-                src = _source_badge(e0)
-                extra = ""
-                if len(cluster) > 1:
-                    extra = f' · <i>{len(cluster)} sessions</i>'
-                lines.append(
-                    f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst_h}</i> · <i>{src}</i>{extra}'
-                    f"\n  <i>{summ}</i>"
-                )
-            total = len(clusters)
-            if total > max_per_institution:
-                n = total - max_per_institution
-                lines.append(
-                    f"  <i>… i {n} més a {html.escape(inst)} (web)</i>"
-                )
-        lines.append("")
+                inst_map: defaultdict[str, list[EventItem]] = defaultdict(list)
+                for e in chunk:
+                    inst_map[e.institution].append(e)
+                for inst in sorted(inst_map.keys()):
+                    raw_sorted = sorted(inst_map[inst], key=lambda e: e.starts_at or "")
+                    clusters = _cluster_same_title_same_inst(raw_sorted)
+                    shown = clusters[:max_per_institution]
+                    for cluster in shown:
+                        lines.append(_format_theme_line(cluster[0], cluster))
+                    total = len(clusters)
+                    if total > max_per_institution:
+                        n = total - max_per_institution
+                        lines.append(
+                            f"  <i>… i {n} més a {html.escape(inst)} (web)</i>"
+                        )
+                lines.append("")
+
+        if expanded:
+            lines.append("<b>Agenda ampliada</b>")
+            lines.append(
+                "<i>Visites, formats més de servei o puntuació més baixa; encara útils si busques context.</i>"
+            )
+            lines.append("")
+            expanded.sort(
+                key=lambda x: (x.starts_at or "", x.institution, x.title)
+            )
+            inst_map2: defaultdict[str, list[EventItem]] = defaultdict(list)
+            for e in expanded:
+                inst_map2[e.institution].append(e)
+            for inst in sorted(inst_map2.keys()):
+                for e in sorted(inst_map2[inst], key=lambda x: x.starts_at or ""):
+                    when = _fmt_day(e.starts_at or "")
+                    title = html.escape(e.title)
+                    link = html.escape(e.url, quote=True)
+                    ctx = html.escape(display_source_line(e))
+                    lines.append(
+                        f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{ctx}</i>'
+                    )
+                lines.append("")
 
     if failures:
         lines.append("<b>Fonts amb error</b>")
@@ -252,6 +304,7 @@ def build_digest_html(
 def format_novelties_html(events: list[EventItem]) -> str:
     if not events:
         return ""
+    _apply_areas(events)
     lines: list[str] = [
         "",
         "<b>Novetats al radar</b>",
@@ -262,10 +315,10 @@ def format_novelties_html(events: list[EventItem]) -> str:
         title = html.escape(e.title)
         link = html.escape(e.url, quote=True)
         when = _fmt_day((e.starts_at or "")[:10])
-        src = _source_badge(e)
+        ctx = html.escape(display_source_line(e))
         lines.append(
-            f"  • <b>{html.escape(e.institution)}</b> · {when} — "
-            f'<a href="{link}">{title}</a> · <i>{src}</i>'
+            f"  • <b>{when}</b> — "
+            f'<a href="{link}">{title}</a> · <i>{ctx}</i>'
         )
     if len(events) > 14:
         lines.append(f"  <i>… i {len(events) - 14} més</i>")

@@ -30,6 +30,8 @@ class Settings:
     seen_prune_days: int
     rss_enabled: bool
     rss_max_per_feed: int
+    digest_highlight_count: int
+    digest_max_per_source_highlights: int
 
 
 def _int_env(name: str, default: int) -> int:
@@ -82,4 +84,6 @@ def load_settings() -> Settings:
         seen_prune_days=max(0, _int_env("SEEN_PRUNE_DAYS", 120)),
         rss_enabled=os.getenv("RSS_ENABLED", "1").lower() not in ("0", "false", "no"),
         rss_max_per_feed=max(1, _int_env("RSS_MAX_PER_FEED", 25)),
+        digest_highlight_count=max(3, min(12, _int_env("DIGEST_HIGHLIGHT_COUNT", 7))),
+        digest_max_per_source_highlights=max(1, min(6, _int_env("DIGEST_MAX_PER_SOURCE", 3))),
     )

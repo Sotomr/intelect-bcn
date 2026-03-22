@@ -175,57 +175,7 @@ def venue_tier_boost(institution_name: str) -> bool:
 
 
 def classify_area(title: str, institution: str, label: str = "") -> str:
-    blob = _norm(f"{title} {institution} {label}")
-    if any(
-        x in blob
-        for x in (
-            "polític",
-            "politic",
-            "geopol",
-            "democràcia",
-            "democracia",
-            "europa",
-            "internacional",
-            "ucraïn",
-            "ucrain",
-            "cidob",
-        )
-    ):
-        return "Política i geopolítica"
-    if any(
-        x in blob
-        for x in (
-            "filosofia",
-            "filosofía",
-            "pensament",
-            "humanitats",
-            "ètica",
-            "etica",
-        )
-    ):
-        return "Filosofia i humanitats"
-    if any(
-        x in blob
-        for x in (
-            "ciència",
-            "ciencia",
-            "física",
-            "astro",
-            "cosmolog",
-            "matemàt",
-            "quàntic",
-            "icfo",
-            "iccub",
-            "cosmocaixa",
-            "enginy",
-            "enginyer",
-            "energia",
-            "sostenibilitat",
-        )
-    ):
-        return "Ciència i tecnologia"
-    if any(x in blob for x in ("art", "macba", "miró", "miro", "exposició", "exposicion")):
-        return "Art i cultura visual"
-    if any(x in blob for x in ("literatura", "llibre", "presentació", "poèt", "narrativ")):
-        return "Literatura i idees"
-    return "General (idees)"
+    """Taxonomia expressiva; implementació a `editorial`."""
+    from editorial import classify_area as _classify
+
+    return _classify(title, institution, label)

@@ -76,7 +76,7 @@ def _parse_cidob_listing(html: str, base: str) -> list[EventItem]:
                 label="",
                 raw_date=raw,
                 tier="nerd",
-                area="Política i geopolítica",
+                area="Política i món",
                 summary=_short_summary(title),
                 source="cidob",
             )

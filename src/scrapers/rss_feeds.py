@@ -49,6 +49,19 @@ RSS_FEEDS: tuple[RssFeed, ...] = (
         "nerd",
         True,
     ),
+    # Mitjans i cultura (Barcelona / País); filtres d’«alta densitat» actius on cal.
+    RssFeed("directa", "https://directa.cat/feed", "Directa", "nerd", True),
+    RssFeed("el_critic", "https://www.elcritic.cat/feed/", "El Crític", "nerd", True),
+    RssFeed("nuvol", "https://www.nuvol.com/feed/", "Núvol", "nerd", True),
+    RssFeed("bonart", "https://www.bonart.cat/feed/", "Bonart", "nerd", True),
+    # Ciència i museu (si el feed falla per 403/404, es registra i es continua)
+    RssFeed(
+        "cosmocaixa",
+        "https://www.cosmocaixa.org/ca/-/feed",
+        "CosmoCaixa Barcelona",
+        "premium",
+        True,
+    ),
 )
 
 _ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
