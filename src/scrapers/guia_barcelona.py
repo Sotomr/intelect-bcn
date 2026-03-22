@@ -51,6 +51,11 @@ def _parse_start_date(val: str | None) -> str | None:
         return None
 
 
+def _normalize_csv_keys(row: dict[str, Any]) -> dict[str, Any]:
+    """El CSV UTF-16 de l’Ajuntament pot deixar \\ufeff al primer nom de columna; DictReader llavors no troba «name»."""
+    return {((k or "").lstrip("\ufeff")): v for k, v in row.items()}
+
+
 def _row_key(row: dict[str, Any]) -> str | None:
     rid = row.get("register_id")
     if rid is None or str(rid).strip() == "":
@@ -155,8 +160,11 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
         ) from last_decode_err
 
     reader = csv.DictReader(io.StringIO(text))
+    if reader.fieldnames:
+        reader.fieldnames = [((fn or "").lstrip("\ufeff")) for fn in reader.fieldnames]
     events: list[EventItem] = []
-    for row in reader:
+    for raw in reader:
+        row = _normalize_csv_keys(raw)
         name = (row.get("name") or "").strip()
         if not name:
             continue
@@ -196,4 +204,8 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
         )
         events.append(ev)
     logger.info("Guia Barcelona (CSV): %s candidats després del filtre intel·lectual", len(events))
+    if len(events) == 0:
+        logger.warning(
+            "Guia Barcelona (CSV): 0 candidats (filtre intel·lectual, dates o claus CSV; revisa logs si esperaves dades)"
+        )
     return events

@@ -97,6 +97,11 @@ def main() -> int:
         window_days=settings.window_days,
     )
     _log_by_source(windowed, "Finestra temporal")
+    if raw_events and not windowed:
+        logger.warning(
+            "Finestra temporal buida però %s esdeveniments abans del filtre de data (totes les dates fora del rang?)",
+            len(raw_events),
+        )
 
     fetched_at = datetime.now(timezone.utc).isoformat()
     current = Snapshot(fetched_at=fetched_at, events=windowed)
@@ -110,6 +115,7 @@ def main() -> int:
         max_per_institution=settings.max_events_per_institution,
         max_base_events=settings.max_base_events,
         failures=failures,
+        total_before_window=len(raw_events),
     )
     _max = TELEGRAM_MAX - 150
     sections = merge_for_telegram(chunk_text(body, _max))

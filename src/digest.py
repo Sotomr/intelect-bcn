@@ -145,6 +145,7 @@ def build_digest_html(
     max_per_institution: int,
     max_base_events: int,
     failures: list[str],
+    total_before_window: int | None = None,
 ) -> str:
     tz = ZoneInfo(tz_name)
     today = datetime.now(tz).date()
@@ -164,11 +165,24 @@ def build_digest_html(
         return "\n".join(lines)
 
     if not events and failures:
-        lines.append(
-            "<b>No hi ha cap acte a la finestra</b> a partir de les fonts que han respost. "
-            "Si només una font falla (p. ex. CCCB 504), les altres haurien d’omplir el llistat; "
-            "si tot ve buit, revisa dates, filtres o reexecuta més tard."
-        )
+        if total_before_window is not None and total_before_window > 0:
+            lines.append(
+                f"<b>Cap acte dins la finestra de dates.</b> S’han recuperat "
+                f"<b>{total_before_window}</b> esdeveniments de fonts que han respost, "
+                f"però cap amb data dins els pròxims <b>{window_days}</b> dies (avui inclòs). "
+                "Puja <code>WINDOW_DAYS</code> o revisa <code>TIMEZONE</code>."
+            )
+        elif total_before_window == 0:
+            lines.append(
+                "<b>Cap font no ha aportat esdeveniments</b> (sense comptar les que han fallat). "
+                "Si només falla el CCCB, la Guia / RSS / CIDOB haurien d’omplir el llistat: "
+                "revisa logs (CSV Guia, filtres) o reexecuta."
+            )
+        else:
+            lines.append(
+                "<b>No hi ha cap acte a la finestra</b> a partir de les fonts que han respost. "
+                "Revisa dates, filtres o reexecuta més tard."
+            )
         lines.append("")
 
     by_area: dict[str, list[EventItem]] = defaultdict(list)

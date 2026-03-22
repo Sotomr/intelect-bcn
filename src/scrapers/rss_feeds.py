@@ -4,6 +4,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 
 import feedparser
 import requests
@@ -56,6 +57,15 @@ def _date_from_entry(e: object) -> str | None:
                 dt = datetime.fromtimestamp(time.mktime(t), tz=timezone.utc)
                 return dt.date().isoformat()
             except (OverflowError, OSError, ValueError):
+                continue
+    # Alguns feeds només posen la data en text (RFC 2822)
+    for attr in ("published", "updated"):
+        raw = getattr(e, attr, None)
+        if raw and str(raw).strip():
+            try:
+                dt = parsedate_to_datetime(str(raw))
+                return dt.date().isoformat()
+            except (TypeError, ValueError):
                 continue
     return None
 
