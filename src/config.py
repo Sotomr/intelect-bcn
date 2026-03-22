@@ -37,7 +37,7 @@ class Settings:
 
 def _rss_feed_set() -> str:
     """RSS_FEED_SET: all | institutional | media (per defecte només fonts d’agenda institucional)."""
-    raw = (os.getenv("RSS_FEED_SET") or "all").strip().lower()
+    raw = (os.getenv("RSS_FEED_SET") or "institutional").strip().lower()
     aliases = {
         "tot": "all",
         "*": "all",

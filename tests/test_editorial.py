@@ -8,8 +8,8 @@ from editorial import display_source_line, editorial_score, pick_highlights, sou
 from models import EventItem  # noqa: E402
 
 
-def test_highlights_represent_unpicked_source_below_score_floor():
-    """Si tot el pool és CCCB fort, una font amb puntuació baixa (p. ex. Guia visita) té 1 slot."""
+def test_highlights_quality_first_no_forced_diversity():
+    """Una visita de baixa puntuació NO entra als destacats només per diversitat de fonts."""
     cccb = [
         EventItem(
             institution="CCCB",
@@ -32,7 +32,7 @@ def test_highlights_represent_unpicked_source_below_score_floor():
         source="guia_bcn",
     )
     hi, _rest = pick_highlights(cccb + [guia_visita], k=7, max_per_source=3)
-    assert any(e.source == "guia_bcn" for e in hi)
+    assert not any(e.source == "guia_bcn" for e in hi)
 
 
 def test_cccb_quota_in_highlights():
@@ -85,30 +85,16 @@ def test_visit_scores_lower_than_debate():
         source="cccb",
     )
     assert editorial_score(debat) > editorial_score(visita)
-
-
-def test_media_rss_lower_score_than_institutional_rss():
-    base = dict(
-        title="Conferència sobre ciència i ciutat",
-        url="https://example.org/c",
-        starts_at="2026-03-25",
-        tier="nerd",
-        label="Conferències",
-        institution="Institut d’Estudis Catalans",
-    )
-    inst_rss = EventItem(**base, source="rss:iec", rss_source_kind="institutional")
-    media_rss = EventItem(**base, source="rss:ara_cultura", rss_source_kind="media")
-    assert editorial_score(inst_rss) > editorial_score(media_rss)
-
-
-def test_display_source_line_marks_media_rss():
+def test_display_source_line_shows_institution_only():
     e = EventItem(
-        institution="Ara Cultura",
+        institution="Institut d’Estudis Catalans",
         title="Taula rodona",
-        url="https://ara.cat/x",
+        url="https://iec.cat/x",
         starts_at="2026-03-25",
         tier="nerd",
-        source="rss:ara_cultura",
-        rss_source_kind="media",
+        source="rss:iec",
     )
-    assert "RSS mitjà" in display_source_line(e)
+    line = display_source_line(e)
+    assert "via RSS" not in line
+    assert "RSS mitjà" not in line
+    assert "Institut" in line

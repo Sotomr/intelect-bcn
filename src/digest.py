@@ -132,7 +132,7 @@ def _source_label_radar(source: str) -> str:
     if s == "cidob":
         return "CIDOB"
     if s.startswith("rss:"):
-        return f"RSS {s[4:]}"
+        return s[4:].replace("_", " ").title()
     return s or "?"
 
 
@@ -142,47 +142,18 @@ def _radar_summary_line(
     *,
     scraper_counts_merged: dict[str, int] | None = None,
 ) -> str:
-    """Comptes per font + avís si alguna font ha fallat (informació ràpida al missatge)."""
+    """Comptes per font (sense telemetria interna)."""
     c: Counter[str] = Counter()
     for e in events:
         s = (e.source or "").strip()
-        if s.startswith("rss:"):
-            c[_source_label_radar(s)] += 1
-        elif s == "cccb":
-            c["CCCB"] += 1
-        elif s == "guia_bcn":
-            c["Guia BCN"] += 1
-        elif s == "cidob":
-            c["CIDOB"] += 1
-        else:
-            c[s or "?"] += 1
+        c[_source_label_radar(s)] += 1
     parts = [f"{k}: {v}" for k, v in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
-    chunks: list[str] = [
+    return (
         "<b>Radar:</b> "
         + str(len(events))
-        + " propostes a la finestra (sessions i actes, després de filtres) — "
+        + " propostes — "
         + " · ".join(parts)
-    ]
-    if scraper_counts_merged:
-        merged_parts = [
-            f"{_source_label_radar(k)}: {v}"
-            for k, v in sorted(scraper_counts_merged.items(), key=lambda x: (-x[1], x[0]))
-        ]
-        chunks.append(
-            "<i>Pipeline (fusionat scrapers, sense filtre de dates encara): "
-            + " · ".join(merged_parts)
-            + "</i>"
-        )
-        if set(scraper_counts_merged.keys()) == {"cccb"}:
-            chunks.append(
-                "<i>Guia CSV, CIDOB i RSS no figuren: cap entrada abans de deduplicar "
-                "(scraper buit, RSS desactivat o cap acte amb data al feed).</i>"
-            )
-    if failures:
-        chunks.append(
-            f"<i>{len(failures)} font(s) sense resposta (detall al final)</i>"
-        )
-    return "\n".join(chunks)
+    )
 
 
 def _format_highlight_block(e: EventItem) -> str:
@@ -242,9 +213,6 @@ def build_digest_html(
         "<b>Intelect BCN</b> — selecció setmanal",
         f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())} · "
         f"idees, ciència, política, cultura (finestra {window_days} dies)</i>",
-        "<i>Prioritzem el text que publiquen les fonts (resum); sense plantilles fixes. "
-        "Destacats = millor puntuació dins la finestra + diversitat de fonts; "
-        "visites i mediació, més avall.</i>",
         "",
     ]
     if events:
@@ -255,15 +223,6 @@ def build_digest_html(
                 scraper_counts_merged=scraper_counts_merged,
             )
         )
-        uniq_src = {((e.source or "").strip() or "?") for e in events}
-        if len(uniq_src) == 1 and len(events) >= 3:
-            lines.append(
-                "<i><b>Avís:</b> tot el radar és d’una sola font. "
-                "Això no és el digest «barrejant» fonts: els altres scrapers no han aportat res "
-                "a la finestra (o han fallat). Revisa logs del job, "
-                "<code>RSS_ENABLED</code>, <code>RSS_FEED_SET</code>, "
-                "connectivitat amb el CSV de la Guia i el CIDOB.</i>"
-            )
         lines.append("")
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra (o fonts buides).")
@@ -301,9 +260,6 @@ def build_digest_html(
         main_rest, expanded = split_agenda_expanded(rest)
 
         lines.append("<b>Destacats de la setmana</b>")
-        lines.append(
-            "<i>Poques peces, màxima densitat; quotes per font per no ser només CCCB.</i>"
-        )
         if highlights:
             for e in highlights:
                 lines.append(_format_highlight_block(e))

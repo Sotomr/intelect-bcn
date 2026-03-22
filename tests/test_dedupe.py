@@ -30,3 +30,25 @@ def test_dedupe_keeps_better_tier():
     out = dedupe_events([a, b])
     assert len(out) == 1
     assert out[0].tier == "premium"
+
+
+def test_dedupe_fuzzy_strips_year_position():
+    """'Jornada OTEC 2026: Energies...' vs 'Jornada OTEC: Energies... 2026' = 1 event."""
+    a = EventItem(
+        institution="Col·legi d'Enginyers",
+        title="Jornada OTEC 2026: Energies renovables per a empreses",
+        url="https://eng.cat/a",
+        starts_at="2026-03-22",
+        tier="nerd",
+        source="rss:enginyers_bcn",
+    )
+    b = EventItem(
+        institution="Col·legi d'Enginyers",
+        title="Jornada OTEC: Energies renovables per empreses 2026",
+        url="https://eng.cat/b",
+        starts_at="2026-03-22",
+        tier="nerd",
+        source="rss:enginyers_bcn",
+    )
+    out = dedupe_events([a, b])
+    assert len(out) == 1

@@ -60,7 +60,7 @@ def test_digest_merges_same_title_multiday():
     assert "CCCB" in html
 
 
-def test_digest_shows_pipeline_counts_and_cccb_only_hint():
+def test_digest_no_internal_telemetry():
     evs = [
         EventItem(
             institution="CCCB",
@@ -81,7 +81,7 @@ def test_digest_shows_pipeline_counts_and_cccb_only_hint():
         failures=[],
         scraper_counts_merged={"cccb": 40},
     )
-    assert "Pipeline" in html
-    assert "CCCB: 40" in html
-    assert "Guia CSV, CIDOB i RSS no figuren" in html
-    assert "tot el radar és d’una sola font" in html
+    assert "Pipeline" not in html
+    assert "RSS mitjà" not in html
+    assert "via RSS" not in html
+    assert "Radar:" in html

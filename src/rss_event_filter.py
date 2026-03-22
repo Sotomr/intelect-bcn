@@ -110,6 +110,29 @@ _INTERVIEW_OR_FEATURE = (
     "carla simon",
 )
 
+# Notes corporatives, anuncis institucionals, resolucions: no són actes on puguis anar.
+_INSTITUTIONAL_NOISE = (
+    "resolució de la convocatòria",
+    "resolucio de la convocatoria",
+    "resolució convocatòria",
+    "resolucio convocatoria",
+    "presentació de candidatures",
+    "presentar candidatures",
+    "candidatures a les comissions",
+    "el degà assisteix",
+    "el dega assisteix",
+    "el degà d'enginyers",
+    "el dega d'enginyers",
+    "acte de reconeixement",
+    "nota corporativa",
+    "procés electoral",
+    "proces electoral",
+    "jurat estable",
+    "comitè de selecció",
+    "comite de seleccio",
+    "the post ",
+)
+
 # Senyals d'acte: paraules que indiquen un ACTE programat (conferència, debat, taller…).
 _EVENT_ACTION = (
     "presentació del llibre",
@@ -198,6 +221,8 @@ def _global_exclude(blob: str) -> bool:
     if any(x in blob for x in _LIFESTYLE):
         return True
     if any(x in blob for x in _INTERVIEW_OR_FEATURE):
+        return True
+    if any(x in blob for x in _INSTITUTIONAL_NOISE):
         return True
     if _retrospective_culture_article(blob):
         return True
