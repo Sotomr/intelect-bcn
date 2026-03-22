@@ -19,7 +19,14 @@ def test_rss_builds_events(monkeypatch):
 
     import scrapers.rss_feeds as rf
 
-    monkeypatch.setattr(rf.feedparser, "parse", lambda url: D())
+    class FakeResp:
+        content = b"<rss/>"
+
+        def raise_for_status(self) -> None:
+            return None
+
+    monkeypatch.setattr(rf.requests, "get", lambda url, timeout=60, headers=None: FakeResp())
+    monkeypatch.setattr(rf.feedparser, "parse", lambda data: D())
 
     # Només una font: patch RSS_FEEDS to single entry
     from scrapers.rss_feeds import RssFeed

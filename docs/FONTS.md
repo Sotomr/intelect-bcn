@@ -5,7 +5,7 @@ El llistat complet i l’estat de cada font està definit a `src/source_catalog.
 ## Resum
 
 - **Integrades (scraping / CSV / llistat):** Guia Barcelona (CSV), CCCB, CIDOB, Gencat (stub buit fins tenir API).
-- **RSS (feed públic):** IEC, Societat Catalana de Matemàtiques (SCM), MACBA, Ateneu Barcelonès — veure `src/scrapers/rss_feeds.py` (`RSS_FEEDS`). Es poden afegir més URLs aquí quan es validin.
+- **RSS (feed públic):** IEC, SCM, MACBA, Ateneu Barcelonès, Hangar, Fundació Mies van der Rohe — veure `src/scrapers/rss_feeds.py` (`RSS_FEEDS`). Es poden afegir més URLs aquí quan es validin.
 - **Pendent:** la resta del catàleg (CaixaForum, CosmoCaixa, Miró, Santa Mònica, Mies, KBr, UB Filosofia, BNC, La Central, Laie, ICCUB, ICE, ICFO, UPF, UPC, Biennal, Barcelona Pensa, etc.) — sovint per Cloudflare, falta d’RSS estable, o calendari només a la web.
 
 Variables: `RSS_ENABLED`, `RSS_MAX_PER_FEED` (veure `.env.example`).

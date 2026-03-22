@@ -7,7 +7,7 @@ Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (
 | Tipus | Fonts |
 |--------|--------|
 | **Dades obertes + scraping** | **Guia Barcelona** (CSV Open Data), **CCCB**, **CIDOB** |
-| **RSS** (configurable) | **IEC**, **SCM**, **MACBA**, **Ateneu** — llista editable a `src/scrapers/rss_feeds.py` |
+| **RSS** (configurable) | **IEC**, **SCM**, **MACBA**, **Ateneu**, **Hangar**, **Mies** — llista editable a `src/scrapers/rss_feeds.py` |
 | **Stub** | **Agenda Cultural Gencat** (fins tenir API o export) |
 
 El **catàleg complet** de totes les fonts previstes (ETSO) i el seu estat (`integrada` / `rss` / `pendent`) és a **`src/source_catalog.py`**. Les que encara no entren al pipeline solen ser per Cloudflare, falta de feed estable o web només amb calendari visual.
@@ -23,9 +23,11 @@ Pots afegir URLs a `RSS_FEEDS` o nous mòduls a `src/scrapers/` i registrar-los 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+cp .env.example .env   # només variables locals (no es puja al repo)
 python src/main.py
 ```
+
+El **chat id** no va al codi: el poses al `.env` o als secrets de GitHub. Per obtenir-lo **només des de Telegram**: obre [@userinfobot](https://t.me/userinfobot) i copia el número que et mostra (xat privat amb tu). Abans envia `/start` al teu bot. Opcional: `scripts/get_chat_id.py` si prefereixes que surti el id en terminal després d’escriure al bot.
 
 Prova sense enviar res:
 

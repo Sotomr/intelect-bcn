@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import feedparser
+import requests
 
 from intellect_filters import classify_area, text_matches_intellect_blob
 from models import EventItem
@@ -23,12 +24,20 @@ class RssFeed:
     apply_intellect_filter: bool
 
 
+_HTTP_HEADERS = {
+    "User-Agent": "intelect-bcn/1.0 (+https://github.com/Sotomr/intelect-bcn)",
+    "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+}
+
 # Fonts amb RSS públic i estable (ampliïs aquí quan trobeu nous feeds vàlids).
+# Nota: molts sites bloquegen feedparser sense User-Agent; es baixa amb requests.
 RSS_FEEDS: tuple[RssFeed, ...] = (
     RssFeed("iec", "https://www.iec.cat/feed/", "Institut d’Estudis Catalans", "nerd", False),
     RssFeed("scm", "https://scm.iec.cat/feed/", "Societat Catalana de Matemàtiques", "nerd", False),
     RssFeed("macba", "https://www.macba.cat/feed/", "MACBA", "premium", True),
     RssFeed("ateneu", "https://ateneubcn.cat/feed/", "Ateneu Barcelonès", "premium", True),
+    RssFeed("hangar", "https://www.hangar.org/feed/", "Hangar", "premium", False),
+    RssFeed("mies", "https://www.miesbcn.com/ca/feed/", "Fundació Mies van der Rohe", "premium", True),
 )
 
 
@@ -48,9 +57,15 @@ def fetch_rss_feeds(*, max_per_feed: int = 25) -> list[EventItem]:
     out: list[EventItem] = []
     for spec in RSS_FEEDS:
         try:
-            d = feedparser.parse(spec.feed_url)
+            r = requests.get(
+                spec.feed_url,
+                timeout=60,
+                headers=_HTTP_HEADERS,
+            )
+            r.raise_for_status()
+            d = feedparser.parse(r.content)
         except Exception as e:
-            logger.warning("RSS %s: error parsejant (%s)", spec.source_id, e)
+            logger.warning("RSS %s: error baixant o parsejant (%s)", spec.source_id, e)
             continue
         if getattr(d, "bozo", False) and not d.entries:
             logger.warning("RSS %s: feed buit o malformat", spec.source_id)

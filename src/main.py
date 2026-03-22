@@ -52,7 +52,7 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
     if settings.rss_enabled:
         jobs.append(
             (
-                "RSS (IEC, SCM, MACBA, Ateneu…)",
+                "RSS (IEC, SCM, MACBA, Ateneu, Hangar, Mies…)",
                 lambda: fetch_rss_feeds(max_per_feed=settings.rss_max_per_feed),
             )
         )

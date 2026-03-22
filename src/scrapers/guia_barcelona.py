@@ -4,6 +4,7 @@ import csv
 import io
 import logging
 import re
+import time
 from datetime import date, datetime
 from typing import Any
 
@@ -23,6 +24,11 @@ DEFAULT_GUIA_CSV = (
     "a25e60cd-3083-4252-9fce-81f733871cb1/resource/"
     "877ccf66-9106-4ae2-be51-95a9f6469e4c/download"
 )
+
+_HEADERS = {
+    "User-Agent": "intelect-bcn/1.0 (+https://github.com/Sotomr/intelect-bcn)",
+    "Accept": "text/csv,*/*",
+}
 
 
 def _short_summary(title: str, max_len: int = 130) -> str:
@@ -53,16 +59,79 @@ def _row_key(row: dict[str, Any]) -> str | None:
     return digits or None
 
 
+def _decode_utf16_csv(raw: bytes) -> str:
+    """CSV oficial ve en UTF-16 LE amb BOM; la descàrrega truncada trenca parells de bytes."""
+    if len(raw) < 4:
+        raise ValueError("resposta massa curta per ser un CSV UTF-16")
+    # Ordre explícit: BOM FF FE = little-endian
+    if raw[:2] == b"\xff\xfe":
+        return raw.decode("utf-16-le")
+    if raw[:2] == b"\xfe\xff":
+        return raw.decode("utf-16-be")
+    return raw.decode("utf-16")
+
+
+def _download_csv_bytes(url: str, *, max_attempts: int = 4) -> bytes:
+    """Baixa el cos sencer; reintenta si Content-Length no coincideix (xarxa truncada)."""
+    last_err: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            r = requests.get(
+                url,
+                timeout=300,
+                headers=_HEADERS,
+                stream=True,
+            )
+            r.raise_for_status()
+            chunks: list[bytes] = []
+            for block in r.iter_content(chunk_size=262_144):
+                if block:
+                    chunks.append(block)
+            data = b"".join(chunks)
+            cl = r.headers.get("Content-Length")
+            if cl and cl.isdigit():
+                expected = int(cl)
+                if len(data) != expected:
+                    logger.warning(
+                        "Guia CSV: mida %s != Content-Length %s (intent %s/%s)",
+                        len(data),
+                        expected,
+                        attempt,
+                        max_attempts,
+                    )
+                    if attempt < max_attempts:
+                        time.sleep(2 * attempt)
+                        continue
+            if len(data) < 10_000:
+                logger.warning(
+                    "Guia CSV: fitxer sospitosament petit (%s bytes)",
+                    len(data),
+                )
+            return data
+        except (requests.RequestException, OSError) as e:
+            last_err = e
+            logger.warning("Guia CSV: intent %s/%s falla: %s", attempt, max_attempts, e)
+            if attempt < max_attempts:
+                time.sleep(2 * attempt)
+    assert last_err is not None
+    raise last_err
+
+
 def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]:
     """
     Dades obertes Ajuntament: agenda en CSV (UTF-16), mateixa font que Guia Barcelona.
     Es filtra per paraules clau d’«alta densitat intel·lectual» + finestra temporal (fora d’aquest mòdul).
     """
     logger.info("Guia Barcelona (CSV): baixant %s", csv_url)
-    r = requests.get(csv_url, timeout=180, headers={"User-Agent": "intelect-bcn/1.0"})
-    r.raise_for_status()
-    # CSV oficial: UTF-16 LE amb BOM; el codec «utf-16» detecta el BOM.
-    text = r.content.decode("utf-16")
+    raw = _download_csv_bytes(csv_url)
+    try:
+        text = _decode_utf16_csv(raw)
+    except UnicodeDecodeError as e:
+        logger.error("Guia CSV: error decodificant UTF-16 (%s). Reintenta més tard.", e)
+        raise RuntimeError(
+            "CSV de la Guia incomplet o corrupte (descàrrega truncada?). Torna a executar."
+        ) from e
+
     reader = csv.DictReader(io.StringIO(text))
     events: list[EventItem] = []
     for row in reader:
