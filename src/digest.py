@@ -1,21 +1,25 @@
+"""
+Digest setmanal — construeix l'HTML per Telegram.
+
+Format:
+- 5 destacats amb data, hora, lloc, títol i frase editorial
+- 4 recomanacions en llista plana (sense agrupació per àrea)
+- Agenda ampliada (max 6, col·lapsada)
+- Sense telemetria interna
+"""
+
 from __future__ import annotations
 
 import html
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from typing import Iterable
 from zoneinfo import ZoneInfo
 
-from editorial import AREA_SECTION_ORDER, classify_area, display_source_line
+from editorial import classify_area, display_source_line
 from models import EventItem
-from selector import SelectionResult, select_candidates, score_event
-
-_TIER_ORDER = ("nerd", "base", "premium")
-
-
-def _tier_rank(tier: str) -> int:
-    return _TIER_ORDER.index(tier) if tier in _TIER_ORDER else 9
+from selector import SelectionResult, select_candidates
 
 
 def _parse_event_date(e: EventItem) -> date | None:
@@ -43,15 +47,7 @@ def filter_events_in_window(
             continue
         if today <= d < end:
             out.append(e)
-    out.sort(
-        key=lambda x: (
-            _tier_rank(x.tier),
-            x.starts_at or "",
-            x.area,
-            x.institution,
-            x.title,
-        )
-    )
+    out.sort(key=lambda x: (x.starts_at or "", x.title))
     return out
 
 
@@ -66,80 +62,45 @@ def _norm_title_key(title: str) -> str:
     return re.sub(r"\s+", " ", (title or "").strip().lower())
 
 
-def _cluster_same_title_same_inst(events: list[EventItem]) -> list[list[EventItem]]:
-    by_key: dict[str, list[EventItem]] = defaultdict(list)
-    for e in events:
-        by_key[_norm_title_key(e.title)].append(e)
-    clusters: list[list[EventItem]] = []
-    for _k, evs in by_key.items():
-        evs = sorted(evs, key=lambda x: x.starts_at or "")
-        clusters.append(evs)
-    clusters.sort(key=lambda g: g[0].starts_at or "")
-    return clusters
+def _collapse_duplicates(results: list[SelectionResult]) -> list[SelectionResult]:
+    """Collapse same-title entries into one with a date range."""
+    by_title: dict[str, list[SelectionResult]] = defaultdict(list)
+    for r in results:
+        by_title[_norm_title_key(r.event.title)].append(r)
 
-
-def _fmt_date_range(cluster: list[EventItem]) -> str:
-    days: list[str] = []
-    for e in cluster:
-        if e.starts_at and len(e.starts_at) >= 10:
-            days.append(e.starts_at[:10])
-    if not days:
-        return ""
-    days = sorted(set(days))
-    if len(days) == 1:
-        return _fmt_day(days[0])
-    return f"{_fmt_day(days[0])}–{_fmt_day(days[-1])}"
-
-
-def _limit_base(events: list[EventItem], max_base: int) -> list[EventItem]:
-    if max_base <= 0:
-        return events
-    non_base = [e for e in events if e.tier != "base"]
-    base = [e for e in events if e.tier == "base"][:max_base]
-    merged = non_base + base
-    merged.sort(key=lambda x: (_tier_rank(x.tier), x.starts_at or "", x.title))
-    return merged
-
-
-def _apply_areas(events: list[EventItem]) -> None:
-    for e in events:
-        e.area = classify_area(e.title, e.institution, e.label)
-
-
-def _source_label(source: str) -> str:
-    s = (source or "").strip()
-    labels = {"guia_bcn": "Guia BCN", "cccb": "CCCB", "cidob": "CIDOB", "iccub": "ICCUB"}
-    if s in labels:
-        return labels[s]
-    if s.startswith("rss:"):
-        return s[4:].replace("_", " ").title()
-    return s or "?"
-
-
-_KIND_LABELS = {
-    "debat": "Debat",
-    "conferencia": "Conferència",
-    "seminari": "Seminari",
-    "xerrada": "Xerrada",
-    "presentacio": "Presentació",
-    "taller": "Taller",
-    "projeccio": "Projecció",
-    "exposicio": "Exposició",
-    "sessio": "Sessió",
-    "visita": "Visita",
-}
+    collapsed: list[SelectionResult] = []
+    for key, group in by_title.items():
+        best = max(group, key=lambda r: r.score)
+        if len(group) > 1:
+            dates = sorted({r.event.starts_at[:10] for r in group if r.event.starts_at})
+            if len(dates) > 1:
+                best.event.starts_at = dates[0]
+                best.event.ends_at = dates[-1]
+        collapsed.append(best)
+    collapsed.sort(key=lambda r: (-r.score, r.event.starts_at or ""))
+    return collapsed
 
 
 def _format_highlight_block(r: SelectionResult) -> str:
     e = r.event
     when = _fmt_day(e.starts_at or "")
-    fmt = _KIND_LABELS.get(e.event_kind, "Sessió")
-    inst = html.escape(display_source_line(e))
+    if e.ends_at and e.ends_at != e.starts_at:
+        when = f"{when}–{_fmt_day(e.ends_at)}"
+
+    time_venue_parts: list[str] = [f"<b>{when}</b>"]
+    if e.starts_at_time:
+        time_venue_parts.append(e.starts_at_time + "h")
+    venue = e.venue or e.institution
+    if venue:
+        time_venue_parts.append(html.escape(venue))
+
+    header = " · ".join(time_venue_parts)
     title = html.escape(e.title)
     link = html.escape(e.url, quote=True)
     phrase = html.escape(r.editorial_phrase)
+
     return (
-        f"<b>{when}</b> · {html.escape(fmt)} · {inst}\n"
+        f"{header}\n"
         f'<a href="{link}">{title}</a>\n'
         f"<i>{phrase}</i>"
     )
@@ -148,10 +109,17 @@ def _format_highlight_block(r: SelectionResult) -> str:
 def _format_recommendation_line(r: SelectionResult) -> str:
     e = r.event
     when = _fmt_day(e.starts_at or "")
+    if e.ends_at and e.ends_at != e.starts_at:
+        when = f"{when}–{_fmt_day(e.ends_at)}"
     title = html.escape(e.title)
     link = html.escape(e.url, quote=True)
     inst = html.escape(display_source_line(e))
     return f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst}</i>'
+
+
+def _apply_areas(events: list[EventItem]) -> None:
+    for e in events:
+        e.area = classify_area(e.title, e.institution, e.label)
 
 
 def build_digest_html(
@@ -159,8 +127,8 @@ def build_digest_html(
     *,
     tz_name: str,
     window_days: int,
-    max_per_institution: int,
-    max_base_events: int,
+    max_per_institution: int = 0,
+    max_base_events: int = 0,
     failures: list[str],
     total_before_window: int | None = None,
     highlight_count: int = 5,
@@ -170,13 +138,11 @@ def build_digest_html(
     tz = ZoneInfo(tz_name)
     today = datetime.now(tz).date()
     end = today + timedelta(days=window_days - 1)
-    events = _limit_base(events, max_base_events)
     _apply_areas(events)
 
     lines: list[str] = [
         "<b>Intelect BCN</b> — selecció setmanal",
-        f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())} · "
-        f"idees, ciència, política, cultura</i>",
+        f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())}</i>",
         "",
     ]
 
@@ -192,14 +158,19 @@ def build_digest_html(
         highlights, rest = select_candidates(
             events,
             max_highlights=max(1, highlight_count),
+            max_recommendations=4,
             max_per_source=max_per_source_highlights,
         )
 
-        # Separar rest en recomanacions fortes i agenda ampliada
-        main_rest = [r for r in rest if r.event.event_kind != "visita" and r.score >= 40]
-        expanded = [r for r in rest if r.event.event_kind == "visita" or r.score < 40]
+        highlights = _collapse_duplicates(highlights)
+        rest = _collapse_duplicates(rest)
 
-        lines.append("<b>Destacats</b>")
+        main_rest = [r for r in rest if not r.event.is_service_format and r.score >= 40]
+        expanded = [r for r in rest if r.event.is_service_format or r.score < 40]
+
+        # Destacats
+        lines.append("<b>Destacats de la setmana</b>")
+        lines.append("")
         if highlights:
             for r in highlights:
                 lines.append(_format_highlight_block(r))
@@ -208,41 +179,22 @@ def build_digest_html(
             lines.append("<i>(Cap entrada prou rellevant per destacar.)</i>")
             lines.append("")
 
-        max_recs = 6
+        # Recomanacions (flat list, max 4)
         if main_rest:
             lines.append("<b>Recomanacions</b>")
+            main_rest.sort(key=lambda r: (-r.score, r.event.starts_at or ""))
+            for r in main_rest[:4]:
+                lines.append(_format_recommendation_line(r))
             lines.append("")
-            by_area: dict[str, list[SelectionResult]] = defaultdict(list)
-            for r in main_rest:
-                by_area[r.category].append(r)
-            area_keys = [a for a in AREA_SECTION_ORDER if by_area.get(a)]
-            rest_areas = sorted(k for k in by_area.keys() if k not in AREA_SECTION_ORDER)
-            ordered_areas = area_keys + rest_areas
 
-            total_shown = 0
-            for area in ordered_areas:
-                if total_shown >= max_recs:
-                    break
-                chunk = by_area.get(area) or []
-                if not chunk:
-                    continue
-                chunk.sort(key=lambda x: (-x.score, x.event.starts_at or ""))
-                lines.append(f"<b>{html.escape(area)}</b>")
-                for r in chunk[:2]:
-                    if total_shown >= max_recs:
-                        break
-                    lines.append(_format_recommendation_line(r))
-                    total_shown += 1
-                lines.append("")
-
+        # Agenda ampliada (max 6)
         if expanded:
             lines.append("<b>Agenda ampliada</b>")
-            lines.append("")
             expanded.sort(key=lambda r: (r.event.starts_at or "", r.event.title))
-            for r in expanded[:12]:
+            for r in expanded[:6]:
                 lines.append(_format_recommendation_line(r))
-            if len(expanded) > 12:
-                lines.append(f"  <i>… i {len(expanded) - 12} més</i>")
+            if len(expanded) > 6:
+                lines.append(f"  <i>… i {len(expanded) - 6} més</i>")
             lines.append("")
 
     if failures:

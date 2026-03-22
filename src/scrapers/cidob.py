@@ -102,6 +102,7 @@ def _parse_cidob_listing(html: str, base: str) -> list[EventItem]:
                 source="cidob",
                 event_kind=classify_event_kind(title),
                 confidence="high" if d else "low",
+                source_quality="premium",
             )
         )
 
@@ -133,6 +134,7 @@ def _parse_cidob_listing(html: str, base: str) -> list[EventItem]:
                 source="cidob",
                 event_kind=classify_event_kind(title),
                 confidence="high" if d else "low",
+                source_quality="premium",
             )
         )
 

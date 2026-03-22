@@ -29,12 +29,23 @@ class EventItem:
     event_kind: str = ""
     # Confiança que és un acte real: high, medium, low
     confidence: str = "low"
+    # --- Camps d'enriquiment (omplerts per enrichment.py) ---
+    starts_at_time: str = ""
+    venue: str = ""
+    city: str = "Barcelona"
+    speakers: str = ""
+    detail_text: str = ""
+    source_quality: str = "good"
+    detail_fetched: bool = False
+    is_series: bool = False
+    is_service_format: bool = False
+    editorial_reason: str = ""
 
     def stable_key(self) -> str:
         return f"{self.source}|{self.url}|{self.starts_at or ''}"
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "institution": self.institution,
             "title": self.title,
             "url": self.url,
@@ -49,7 +60,19 @@ class EventItem:
             "rss_source_kind": self.rss_source_kind or "",
             "event_kind": self.event_kind or "",
             "confidence": self.confidence or "low",
+            "starts_at_time": self.starts_at_time or "",
+            "venue": self.venue or "",
+            "city": self.city or "Barcelona",
+            "speakers": self.speakers or "",
+            "source_quality": self.source_quality or "good",
+            "detail_fetched": self.detail_fetched,
+            "is_series": self.is_series,
+            "is_service_format": self.is_service_format,
+            "editorial_reason": self.editorial_reason or "",
         }
+        if self.detail_text:
+            d["detail_text"] = self.detail_text
+        return d
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "EventItem":
@@ -68,6 +91,16 @@ class EventItem:
             rss_source_kind=d.get("rss_source_kind") or "",
             event_kind=d.get("event_kind") or "",
             confidence=d.get("confidence") or "low",
+            starts_at_time=d.get("starts_at_time") or "",
+            venue=d.get("venue") or "",
+            city=d.get("city") or "Barcelona",
+            speakers=d.get("speakers") or "",
+            detail_text=d.get("detail_text") or "",
+            source_quality=d.get("source_quality") or "good",
+            detail_fetched=bool(d.get("detail_fetched")),
+            is_series=bool(d.get("is_series")),
+            is_service_format=bool(d.get("is_service_format")),
+            editorial_reason=d.get("editorial_reason") or "",
         )
 
 

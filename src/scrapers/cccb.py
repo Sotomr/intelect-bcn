@@ -105,6 +105,7 @@ def _parse_cccb_calendar(html: str) -> list[EventItem]:
             raw = f"{day_i:02d}/{month:02d}/{year}"
             starts = d.isoformat()
             summ = _short_summary(title, label)
+            ek = classify_event_kind(title, label)
             events.append(
                 EventItem(
                     institution="CCCB",
@@ -117,8 +118,10 @@ def _parse_cccb_calendar(html: str) -> list[EventItem]:
                     area=classify_area(title, "CCCB", label),
                     summary=summ,
                     source="cccb",
-                    event_kind=classify_event_kind(title, label),
+                    event_kind=ek,
                     confidence="high",
+                    source_quality="premium",
+                    is_service_format=ek == "visita",
                 )
             )
 

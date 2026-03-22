@@ -200,6 +200,7 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
         url = f"https://guia.barcelona.cat/ca/agenda/{rid}"
         tier = "premium" if venue_tier_boost(inst) else "base"
         area = classify_area(name, inst)
+        ek = classify_event_kind(name)
         ev = EventItem(
             institution=inst,
             title=name,
@@ -212,8 +213,10 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
             area=area,
             summary=_short_summary(name),
             source="guia_bcn",
-            event_kind=classify_event_kind(name),
+            event_kind=ek,
             confidence="high",
+            source_quality="good",
+            is_service_format=ek == "visita",
         )
         events.append(ev)
     logger.info("Guia Barcelona (CSV): %s candidats després del filtre intel·lectual", len(events))

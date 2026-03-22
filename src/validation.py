@@ -1,6 +1,11 @@
 """
-Validació dura: decideix si una peça és un acte al qual pots anar.
-Unifica filter_noise_events, filter_product_events i rss_entry_is_valid_event.
+Validació dura: "és un acte públic real al qual pots anar?"
+
+Classifica cada candidat com:
+- acte_recomanable → entra al digest principal
+- servei → agenda ampliada (visita, mediació, portes obertes)
+- soroll → fora
+- ambigu → candidat feble (no entra sense enriquiment posterior)
 """
 
 from __future__ import annotations
@@ -22,7 +27,7 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-# ---- Patrons d'exclusió (acumulats de rss_event_filter + intellect_filters) ----
+# ---- Patrons d'exclusió ----
 
 _SPORT = (
     "barça", " fc ", "futbol", "fútbol", "rugby", "bàsquet", "basquet",
@@ -57,6 +62,14 @@ _INSTITUTIONAL_NOISE = (
     "procés electoral", "proces electoral",
     "jurat estable", "comitè de selecció", "comite de seleccio",
     "the post ",
+    "memoria anual", "memòria anual",
+    "informe de gestió", "informe de gestio",
+    "comunicat de premsa", "comunicat oficial",
+    "nomenament", "presa de possessió", "presa de possessio",
+    "conveni de col·laboració", "conveni de col.laboracio",
+    "balanç anual", "balanc anual",
+    "assemblea general ordinària", "assemblea general ordinaria",
+    "junta de govern",
 )
 
 _CINEMA_NOISE_RE = re.compile(r"festival.*cinema|cinema.*festival", re.IGNORECASE)
@@ -64,8 +77,23 @@ _RE_D_A = re.compile(r"d['\u2019']a", re.IGNORECASE)
 
 _NON_EVENT_KINDS = frozenset({"article"})
 
+_RECOMMENDABLE_KINDS = frozenset({
+    "debat", "conferencia", "seminari", "xerrada",
+    "presentacio", "taller", "projeccio",
+})
 
-def _is_noise(blob: str, title: str = "") -> bool:
+_SERVICE_KINDS = frozenset({"visita"})
+
+_SERVICE_TITLE_PATTERNS = (
+    "visita guiada", "visita comentada", "visita mediada",
+    "portes obertes", "mediació", "mediacio",
+    "accessibilitat", "ceguesa", "baixa visió", "baixa visio",
+    "activitat familiar", "activitat infantil",
+    "casal d'estiu", "casal d'hivern",
+)
+
+
+def _is_hard_noise(blob: str, title: str = "") -> bool:
     if any(_norm(x) in blob for x in _SPORT):
         return True
     if any(_norm(x) in blob for x in _RECAP):
@@ -90,12 +118,20 @@ def _is_noise(blob: str, title: str = "") -> bool:
     return False
 
 
+def _is_service_format(blob: str, e: EventItem) -> bool:
+    if e.is_service_format:
+        return True
+    if e.event_kind in _SERVICE_KINDS:
+        return True
+    if any(_norm(p) in blob for p in _SERVICE_TITLE_PATTERNS):
+        return True
+    return False
+
+
 def validate_candidate(e: EventItem) -> EventItem | None:
     """
-    Porta d'entrada única: retorna l'event (potencialment amb confidence ajustada)
-    si és un acte vàlid, o None si s'ha de descartar.
-
-    Pregunta central: "és un acte públic real al qual pots anar?"
+    Porta d'entrada única.
+    Retorna l'event (potencialment amb camps ajustats) si és vàlid, o None si s'ha de descartar.
     """
     # 1. Data: sense data no entra a cap agenda
     if not e.starts_at:
@@ -103,18 +139,22 @@ def validate_candidate(e: EventItem) -> EventItem | None:
 
     blob = _norm(f"{e.title} {e.summary or ''}")
 
-    # 2. Soroll global (esport, cròniques, lifestyle, institucional)
-    if _is_noise(blob, e.title):
+    # 2. Soroll dur (esport, cròniques, institucional, lifestyle)
+    if _is_hard_noise(blob, e.title):
         return None
 
     # 3. Tipus incompatible
     if e.event_kind in _NON_EVENT_KINDS:
         return None
 
-    # 4. Confidence: ajustar si event_kind és visita/servei
-    if e.event_kind == "visita":
-        if e.confidence == "high":
-            e.confidence = "medium"
+    # 4. RSS sense data d'acte explícita: fora del digest principal
+    if e.source.startswith("rss:") and e.confidence != "high":
+        return None
+
+    # 5. Marcar formats de servei
+    if _is_service_format(blob, e):
+        e.is_service_format = True
+        e.confidence = "medium" if e.confidence == "high" else e.confidence
 
     return e
 

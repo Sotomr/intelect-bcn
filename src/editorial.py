@@ -21,7 +21,6 @@ def _norm(s: str) -> str:
     return s
 
 
-# Taxonomia més intencionada (menys «calax de sastre» que «General (idees)»).
 AREA_SECTION_ORDER: tuple[str, ...] = (
     "Filosofia i pensament",
     "Política i món",
@@ -29,9 +28,8 @@ AREA_SECTION_ORDER: tuple[str, ...] = (
     "Tecnologia i computació",
     "Art i cultura crítica",
     "Literatura i idees",
-    "Cultura visual i ciutat",
-    "Mediació i accés (exposició)",
-    "Cultura i espai públic",
+    "Ciutat i cultura visual",
+    "Agenda ampliada",
 )
 
 
@@ -122,13 +120,11 @@ def classify_area(title: str, institution: str, label: str = "") -> str:
         return "Art i cultura crítica"
     if any(x in blob for x in ("literatura", "llibre", "presentació del llibre", "poèt", "narrativ", "assaig")):
         return "Literatura i idees"
-    if any(x in blob for x in ("ceguesa", "baixa visió", "baixa vision")) and "exposici" in blob:
-        return "Mediació i accés (exposició)"
-    if any(x in blob for x in ("simfonies de ciutat", "simfonies", "estrena de «")):
-        return "Cultura visual i ciutat"
-    if any(x in blob for x in ("visita", "mirador", "portes obertes")):
-        return "Cultura i espai públic"
-    return "Cultura i espai públic"
+    if any(x in blob for x in ("simfonies de ciutat", "simfonies", "estrena de «", "urbanisme", "arquitectur")):
+        return "Ciutat i cultura visual"
+    if any(x in blob for x in ("ceguesa", "baixa visio", "visita", "mirador", "portes obertes")):
+        return "Agenda ampliada"
+    return "Ciutat i cultura visual"
 
 
 def _title_key(title: str) -> str:

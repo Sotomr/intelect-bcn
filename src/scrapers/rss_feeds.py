@@ -196,21 +196,24 @@ def _dates_from_feed_entry(e: object) -> list[date]:
     return out
 
 
-def _pick_event_date(e: object, title: str, summary: str) -> str | None:
+def _pick_event_date(e: object, title: str, summary: str) -> tuple[str | None, bool]:
+    """Retorna (iso_date, has_explicit_event_date).
+    has_explicit_event_date=True si la data ve del text (no de la data de publicació del feed).
+    """
     today = _rss_today()
     blob = f"{title}\n{summary}"
     from_text = _extract_dates_from_text(blob)
     horizon = today + timedelta(days=500)
     upcoming = [d for d in set(from_text) if today <= d <= horizon]
     if upcoming:
-        return min(upcoming).isoformat()
+        return min(upcoming).isoformat(), True
     feed_ds = _dates_from_feed_entry(e)
     if feed_ds:
         pub = max(feed_ds)
         if pub >= today:
-            return pub.isoformat()
-        return pub.isoformat()
-    return None
+            return pub.isoformat(), False
+        return pub.isoformat(), False
+    return None, False
 
 
 def _rss_http_timeout() -> tuple[float, float]:
@@ -251,7 +254,7 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
         ):
             continue
         summary_plain = _strip_html(summary)
-        day = _pick_event_date(e, title, summary_plain)
+        day, has_explicit_date = _pick_event_date(e, title, summary_plain)
         if not day:
             continue
         n += 1
@@ -265,10 +268,7 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
         ):
             continue
         kind = classify_event_kind(title, "", f"rss:{spec.source_id}")
-        has_explicit_date = bool(
-            _extract_dates_from_text(f"{title}\n{summary_plain}")
-        )
-        conf = "high" if has_explicit_date else "medium"
+        conf = "high" if has_explicit_date else "low"
         out.append(
             EventItem(
                 institution=spec.institution,
@@ -284,6 +284,8 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
                 rss_source_kind=spec.kind,
                 event_kind=kind,
                 confidence=conf,
+                source_quality="good",
+                is_service_format=kind == "visita",
             )
         )
     logger.info("RSS %s: %s entrades (després de filtres)", spec.source_id, n)

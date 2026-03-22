@@ -2,8 +2,12 @@
 Selector editorial: scoring, selecció de highlights i frases de valor.
 Separa el «què val la pena» del scraping i la presentació.
 
-Dissenyat amb una interfície neta per plugar un LLM com a jutge
-(veure paràmetre `judge` a `select_candidates`).
+Scoring en 3 passes:
+  1. Llindar mínim de qualitat
+  2. Puntuació per qualitat + adequació al perfil
+  3. Diversitat de fonts (suau, mai baixant qualitat)
+
+Interfície `judge` preparada per LLM (Fase 2).
 """
 
 from __future__ import annotations
@@ -33,7 +37,10 @@ _PROFILE_KEYWORDS = (
     "algoritme", "dades", "ciberseguretat", "blockchain",
     "literatura", "assaig", "narrativ", "poetica",
     "democracia", "geopol", "internacional", "europa",
-    "humanitats", "ciencia",
+    "humanitats", "ciencia", "recerca",
+    "seminari", "colloquium", "lecture",
+    "foton", "gravitat", "particul",
+    "utopi", "distopi", "resilienc",
 )
 
 _FORMAT_SCORES: dict[str, int] = {
@@ -66,12 +73,21 @@ _SOURCE_BONUS: dict[str, int] = {
     "cccb": 5,
     "cidob": 8,
     "iccub": 8,
+    "icfo": 8,
+    "ice_csic": 7,
     "palau_macaya": 6,
     "la_central": 5,
 }
 
+_QUALITY_BONUS: dict[str, int] = {
+    "premium": 8,
+    "good": 0,
+    "exploratory": -5,
+}
+
 _PENALTY_PATTERNS = (
-    ("infantil", -30), ("familiar", -30), ("mirador", -20),
+    ("infantil", -30), ("infanteses", -30), ("familiar", -30),
+    ("mirador", -20),
     ("ceguesa", -15), ("baixa visio", -15), ("portes obertes", -8),
 )
 
@@ -86,21 +102,36 @@ class SelectionResult:
 
 
 def score_event(e: EventItem) -> int:
-    """Score 0-100 basat en format, tier, perfil, confiança i font."""
+    """Score 0-100 basat en format, tier, perfil, enriquiment i font."""
     s = 50
+
     s += _FORMAT_SCORES.get(e.event_kind, 0)
     s += _TIER_SCORES.get(e.tier, 0)
     s += _CONFIDENCE_SCORES.get(e.confidence, 0)
 
-    blob = _norm(f"{e.title} {e.summary}")
-    if any(kw in blob for kw in _PROFILE_KEYWORDS):
-        s += 10
+    blob = _norm(f"{e.title} {e.summary} {e.detail_text}")
+    profile_matches = sum(1 for kw in _PROFILE_KEYWORDS if kw in blob)
+    s += min(profile_matches * 4, 16)
 
     src = (e.source or "").split(":")[0]
     s += _SOURCE_BONUS.get(src, 0)
     if e.source.startswith("rss:"):
         src_id = e.source[4:]
         s += _SOURCE_BONUS.get(src_id, 0)
+
+    s += _QUALITY_BONUS.get(e.source_quality, 0)
+
+    if e.detail_fetched and e.detail_text and len(e.detail_text) > 100:
+        s += 6
+    if e.speakers:
+        s += 4
+    if e.starts_at_time:
+        s += 2
+    if e.venue:
+        s += 2
+
+    if e.is_service_format:
+        s -= 20
 
     tb = _norm(e.title)
     for pattern, penalty in _PENALTY_PATTERNS:
@@ -111,11 +142,23 @@ def score_event(e: EventItem) -> int:
 
 
 def _heuristic_phrase(e: EventItem) -> str:
-    """Frase curta de valor basada en format + tema + institució."""
-    kind = e.event_kind or "sessio"
+    """Frase editorial amb veu: «per què importa», no un snippet sec."""
     inst = (e.institution or "").strip()
     title = (e.title or "").strip()
+    speakers = (e.speakers or "").strip()
+    detail = (e.detail_text or "").strip()
 
+    # If we have rich detail_text, extract the "why it matters"
+    if detail and len(detail) > 80:
+        first_sentence = re.split(r"(?<=[.!?])\s+", detail[:500])
+        for sent in first_sentence[:3]:
+            sent = sent.strip()
+            if len(sent) > 40 and not sent.lower().startswith("abstract"):
+                if speakers and speakers not in sent:
+                    return _clip(f"{sent}", 280)
+                return _clip(sent, 280)
+
+    # Build phrase from speakers + kind + institution
     kind_labels = {
         "debat": "Debat",
         "conferencia": "Conferència",
@@ -124,35 +167,30 @@ def _heuristic_phrase(e: EventItem) -> str:
         "presentacio": "Presentació",
         "taller": "Taller",
         "projeccio": "Projecció",
-        "exposicio": "Exposició",
-        "sessio": "Sessió",
-        "visita": "Visita",
     }
-    fmt = kind_labels.get(kind, "Sessió")
+    fmt = kind_labels.get(e.event_kind, "")
 
+    if speakers and fmt:
+        return _clip(f"{speakers} · {fmt} a {inst}.", 280)
+    if speakers:
+        return _clip(f"Amb {speakers} — {inst}.", 280)
+
+    # Fallback: summary if it adds value over title
     summ = (e.summary or "").strip()
     if summ and len(summ) > 60 and _norm(summ[:80]) != _norm(title[:80]):
-        clip = summ[:220].rsplit(" ", 1)[0] if len(summ) > 220 else summ
-        return clip
+        return _clip(summ, 280)
 
-    blob = _norm(f"{title} {e.label}")
-    themes = []
-    if any(x in blob for x in ("politic", "democrac", "geopol", "internacional")):
-        themes.append("política i món")
-    if any(x in blob for x in ("filosof", "pensament", "humanitat", "etica")):
-        themes.append("pensament")
-    if any(x in blob for x in ("fisic", "astro", "cosmol", "quantic", "matemat")):
-        themes.append("ciència")
-    if any(x in blob for x in ("literatur", "novel.la", "poetic", "narrativ", "assaig")):
-        themes.append("literatura")
-    if any(x in blob for x in ("dades", "algoritme", "computac", "intel.lig")):
-        themes.append("tecnologia")
-    if any(x in blob for x in ("art ", " art", "visual", "exposici")):
-        themes.append("art")
+    if fmt and inst:
+        return f"{fmt} a {inst}."
+    return inst or ""
 
-    if themes:
-        return f"{fmt} sobre {', '.join(themes[:2])} — {inst}."
-    return f"{fmt} a {inst}." if inst else f"{fmt}."
+
+def _clip(text: str, max_len: int = 280) -> str:
+    text = (text or "").strip()
+    if len(text) <= max_len:
+        return text
+    cut = text[:max_len - 1].rsplit(" ", 1)[0]
+    return cut + "…"
 
 
 def _title_key(t: str) -> str:
@@ -170,6 +208,7 @@ def select_candidates(
     events: Iterable[EventItem],
     *,
     max_highlights: int = 5,
+    max_recommendations: int = 4,
     max_per_source: int = 3,
     judge: Callable[[list[EventItem]], list[SelectionResult]] | None = None,
 ) -> tuple[list[SelectionResult], list[SelectionResult]]:
@@ -188,11 +227,12 @@ def select_candidates(
         rest = [r for r in results if not r.is_highlight]
         return highlights, sorted(rest, key=lambda r: -r.score)
 
+    # Pass 1: Score everything
     scored = [(e, score_event(e)) for e in all_events]
     scored.sort(key=lambda x: (-x[1], x[0].starts_at or "", x[0].title))
 
-    # Visites i servei mai als destacats
-    candidates = [(e, s) for e, s in scored if e.event_kind != "visita"]
+    # Pass 2: Pick highlights (no service formats, quality threshold)
+    candidates = [(e, s) for e, s in scored if not e.is_service_format]
 
     picked: list[SelectionResult] = []
     counts: dict[str, int] = defaultdict(int)
@@ -206,6 +246,7 @@ def select_candidates(
         tk = _title_key(e.title)
         if tk in picked_titles:
             continue
+        # Pass 3: Soft source diversity
         b = _source_bucket(e)
         if counts[b] >= max_per_source:
             continue
