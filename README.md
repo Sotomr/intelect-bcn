@@ -1,6 +1,19 @@
 # intelect-bcn
 
-Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (conferències, debats, geopolítica, cultura), en genera un **digest setmanal** en català (agrupat per capes i àmbits, amb resum curt i enllaç oficial) i l’envia per **Telegram** (mateix patró que `cinema-alert`: fonts → deduplicació → digest HTML → `sendMessage`).
+Bot en Python que recull esdeveniments amb densitat intel·lectual a Barcelona (conferències, debats, geopolítica, cultura), en genera un **digest setmanal** en català (**agrupat per temes**, resum curt, enllaç oficial i **font** de cada línia) i l’envia per **Telegram** (fonts → filtre de soroll → deduplicació → digest HTML → `sendMessage`).
+
+## Objectiu vs cobertura actual
+
+| Objectiu | Estat |
+|----------|--------|
+| **Vàries fonts**, no una sola institució | Integrades: **Guia** (CSV), **CCCB**, **CIDOB**, **7 RSS** (IEC, SCM, MACBA, Ateneu, Hangar, Mies, Enginyers BCN). **Gencat** preparat però buit (sense API). |
+| **Llegible per temes** (filosofia, política, ciència…) | El digest va per **àmbit** (`classify_area`), barrejant fonts; cada línia indica **pipeline** (`Guia BCN`, `CCCB`, `RSS·…`). |
+| **Menys soroll** (cinema repetit, etc.) | Filtre per títols tipus **D’A / Festival de Cinema de Barcelona**; mateix acte diversos dies **agrupat** en un interval. |
+| **Robustesa** (xarxa, CSV gran) | HTTP: **reintents** i timeout de lectura configurable (`HTTP_READ_TIMEOUT`). Guia: **reintents** i UTF-16 amb fallback. |
+| **Novetats** respecte a execucions anteriors | Registre `seen_event_keys.json` + bloc opcional **Novetats al radar**. |
+| **Tot el catàleg ETSO** (totes les sales de la llista) | **No** automàtic: moltes depenen de RSS/ICS inexistents o webs protegides; es van afegint fonts vàlides (`RSS_FEEDS`, `source_catalog`). |
+
+**Millores típiques:** afegir URLs a `RSS_FEEDS`, pujar `MAX_BASE_EVENTS` si vols més Guia, o integrar un **ICS** quan una institució el publiqui.
 
 ## Fonts integrades ara
 
@@ -35,7 +48,7 @@ Prova sense enviar res:
 DRY_RUN=1 python src/main.py
 ```
 
-Variables útils: `WINDOW_DAYS`, `MAX_EVENTS_PER_INSTITUTION`, `MAX_BASE_EVENTS`, `APPEND_NOVELTIES`, `RSS_ENABLED`, `RSS_MAX_PER_FEED`, `GUIA_CSV_URL`, `CCCB_CALENDAR_URL`, `CIDOB_ACTIVITIES_URL`.
+Variables útils: `WINDOW_DAYS`, `MAX_EVENTS_PER_INSTITUTION`, `MAX_BASE_EVENTS`, `APPEND_NOVELTIES`, `RSS_ENABLED`, `RSS_MAX_PER_FEED`, `HTTP_READ_TIMEOUT`, `GUIA_CSV_URL`, `CCCB_CALENDAR_URL`, `CIDOB_ACTIVITIES_URL`.
 
 ## GitHub Actions
 

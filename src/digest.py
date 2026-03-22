@@ -238,9 +238,10 @@ def format_novelties_html(events: list[EventItem]) -> str:
         title = html.escape(e.title)
         link = html.escape(e.url, quote=True)
         when = _fmt_day((e.starts_at or "")[:10])
+        src = _source_badge(e)
         lines.append(
-            f"  • <b>{html.escape(e.institution)}</b> ({html.escape(e.tier)}) · {when} — "
-            f'<a href="{link}">{title}</a>'
+            f"  • <b>{html.escape(e.institution)}</b> · {when} — "
+            f'<a href="{link}">{title}</a> · <i>{src}</i>'
         )
     if len(events) > 14:
         lines.append(f"  <i>… i {len(events) - 14} més</i>")

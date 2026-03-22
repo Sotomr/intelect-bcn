@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -39,6 +40,14 @@ logging.basicConfig(
     format="%(levelname)s %(name)s: %(message)s",
 )
 logger = logging.getLogger("intelect_bcn")
+
+
+def _log_by_source(events: list[EventItem], label: str) -> None:
+    if not events:
+        return
+    c = Counter((e.source or "?") for e in events)
+    ordered = ", ".join(f"{k}={v}" for k, v in sorted(c.items(), key=lambda x: (-x[1], x[0])))
+    logger.info("%s: %s esdeveniments — per font: %s", label, len(events), ordered)
 
 
 def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
@@ -87,6 +96,7 @@ def main() -> int:
         tz_name=settings.timezone,
         window_days=settings.window_days,
     )
+    _log_by_source(windowed, "Finestra temporal")
 
     fetched_at = datetime.now(timezone.utc).isoformat()
     current = Snapshot(fetched_at=fetched_at, events=windowed)
