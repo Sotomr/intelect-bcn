@@ -1,19 +1,6 @@
 {
-  "fetched_at": "2026-03-22T18:28:34.695638+00:00",
+  "fetched_at": "2026-03-22T18:43:28.492015+00:00",
   "events": [
-    {
-      "institution": "Ara Cultura",
-      "title": "“Sento que hi ha una connexió entre el cinema de Carla Simón i el meu”",
-      "url": "https://www.ara.cat/cultura/cinema/mia-hansen-love-connexio-cinema-carla-simon_128_5686266.html",
-      "starts_at": "2026-03-22",
-      "ends_at": null,
-      "label": "RSS",
-      "raw_date": "2026-03-22",
-      "tier": "nerd",
-      "area": "Ciutat i institucions",
-      "summary": "El 2011 el públic català va descobrir el cinema de Mia Hansen-Love en la primera edició del Festival D'A , que va presentar la segona pel·lícula de la directora francesa, Le père de mes enfants . Des d'aleshores, tant el festival com la cineasta han crescut en importància i són referents essencials per a qualsevol cinèfil. Per tant, el premi D'A que en aquesta 15a edició del festival ha rebut Hansen-Love té alguna co…",
-      "source": "rss:ara_cultura"
-    },
     {
       "institution": "CCCB",
       "title": "Visita el Mirador del CCCB 2026",
@@ -23,7 +10,7 @@
       "label": "",
       "raw_date": "22/03/2026",
       "tier": "premium",
-      "area": "Ciutat i institucions",
+      "area": "Cultura i espai públic",
       "summary": "Visita el Mirador del CCCB 2026",
       "source": "cccb"
     },
@@ -49,7 +36,7 @@
       "label": "Amics CCCB",
       "raw_date": "24/03/2026",
       "tier": "premium",
-      "area": "Ciutat i institucions",
+      "area": "Cultura i espai públic",
       "summary": "Visita guiada a l'exposició «Rodoreda, un bosc». Amics CCCB",
       "source": "cccb"
     },
@@ -62,7 +49,7 @@
       "label": "Accessible Rodoreda, un bosc",
       "raw_date": "24/03/2026",
       "tier": "premium",
-      "area": "Ciutat i institucions",
+      "area": "Cultura i espai públic",
       "summary": "«Rodoreda, un bosc» per a persones amb ceguesa o baixa visió. Accessible Rodoreda, un bosc",
       "source": "cccb"
     },
@@ -75,7 +62,7 @@
       "label": "Debats",
       "raw_date": "25/03/2026",
       "tier": "premium",
-      "area": "Ciutat i institucions",
+      "area": "Cultura i espai públic",
       "summary": "Craig Calhoun, María Pía Lara i Camil Ungureanu. Debats",
       "source": "cccb"
     },
@@ -94,19 +81,6 @@
     },
     {
       "institution": "CCCB",
-      "title": "Estrena de «Simfonies de ciutat» 2026",
-      "url": "https://www.cccb.org/ca/w/activitats/estrena-de-simfonies-de-ciutat-2026",
-      "starts_at": "2026-03-26",
-      "ends_at": null,
-      "label": "Audiovisuals Simfonies de ciutat",
-      "raw_date": "26/03/2026",
-      "tier": "premium",
-      "area": "Ciutat i institucions",
-      "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
-      "source": "cccb"
-    },
-    {
-      "institution": "CCCB",
       "title": "Michel Nieva",
       "url": "https://www.cccb.org/ca/w/activitats/michel-nieva",
       "starts_at": "2026-03-26",
@@ -114,8 +88,21 @@
       "label": "Debats",
       "raw_date": "26/03/2026",
       "tier": "premium",
-      "area": "Ciutat i institucions",
+      "area": "Cultura i espai públic",
       "summary": "Michel Nieva. Debats",
+      "source": "cccb"
+    },
+    {
+      "institution": "CCCB",
+      "title": "Estrena de «Simfonies de ciutat» 2026",
+      "url": "https://www.cccb.org/ca/w/activitats/estrena-de-simfonies-de-ciutat-2026",
+      "starts_at": "2026-03-26",
+      "ends_at": null,
+      "label": "Audiovisuals Simfonies de ciutat",
+      "raw_date": "26/03/2026",
+      "tier": "premium",
+      "area": "Cultura visual i ciutat",
+      "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
       "source": "cccb"
     },
     {
@@ -140,7 +127,7 @@
       "label": "Audiovisuals Simfonies de ciutat",
       "raw_date": "27/03/2026",
       "tier": "premium",
-      "area": "Ciutat i institucions",
+      "area": "Cultura visual i ciutat",
       "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
       "source": "cccb"
     }
