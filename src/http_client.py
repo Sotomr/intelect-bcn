@@ -16,6 +16,9 @@ DEFAULT_HEADERS = {
     "Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8,en;q=0.7",
 }
 
+# El CCCB sovint respon 504 (gateway saturat); es reintenta amb pausa.
+_RETRY_STATUS = frozenset({429, 502, 503, 504})
+
 
 def _timeout_tuple() -> tuple[float, float]:
     """(connect, read) en segons; el calendari CCCB pot tardar en pic de càrrega."""
@@ -23,38 +26,72 @@ def _timeout_tuple() -> tuple[float, float]:
     if raw.isdigit():
         read_s = float(raw)
     else:
-        read_s = 120.0
-    return (20.0, read_s)
+        read_s = 180.0
+    return (25.0, read_s)
+
+
+def _max_http_attempts() -> int:
+    v = (os.getenv("HTTP_MAX_ATTEMPTS") or "").strip()
+    if v.isdigit():
+        return max(1, min(12, int(v)))
+    return 6
+
+
+def _backoff_seconds(attempt: int, *, gateway: bool) -> float:
+    """Més pausa després de 502/503/504 (gateway)."""
+    if gateway:
+        return min(15.0 * attempt, 90.0)
+    return min(5.0 * attempt, 45.0)
 
 
 def fetch_text(
     url: str,
     timeout: float | tuple[float, float] | None = None,
     *,
-    max_attempts: int = 3,
+    max_attempts: int | None = None,
 ) -> str:
     """
-    GET amb reintents (timeouts i errors de xarrega puntuals, p. ex. GitHub Actions).
+    GET amb reintents: 504/502/503/429, timeouts i errors de connexió.
+    Els 404 i altres 4xx no es reintanten (raise_for_status).
     """
     if timeout is None:
         timeout = _timeout_tuple()
-    last_err: BaseException | None = None
+    if max_attempts is None:
+        max_attempts = _max_http_attempts()
+
+    last_net_err: BaseException | None = None
+
     for attempt in range(1, max_attempts + 1):
         try:
             r = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+            if r.status_code in _RETRY_STATUS:
+                gw = r.status_code in (502, 503, 504)
+                logger.warning(
+                    "GET %s → HTTP %s (intent %s/%s)",
+                    url[:88],
+                    r.status_code,
+                    attempt,
+                    max_attempts,
+                )
+                if attempt < max_attempts:
+                    time.sleep(_backoff_seconds(attempt, gateway=gw))
+                    continue
             r.raise_for_status()
             r.encoding = r.apparent_encoding or "utf-8"
             return r.text
-        except requests.RequestException as e:
-            last_err = e
+        except (requests.Timeout, requests.ConnectionError) as e:
+            last_net_err = e
             logger.warning(
                 "GET %s falla (intent %s/%s): %s",
-                url[:80],
+                url[:88],
                 attempt,
                 max_attempts,
                 e,
             )
             if attempt < max_attempts:
-                time.sleep(2.0 * attempt)
-    assert last_err is not None
-    raise last_err
+                time.sleep(_backoff_seconds(attempt, gateway=False))
+                continue
+            raise
+
+    assert last_net_err is not None
+    raise last_net_err

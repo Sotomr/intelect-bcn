@@ -163,6 +163,14 @@ def build_digest_html(
         lines.append("Sense esdeveniments amb data dins la finestra (o fonts buides).")
         return "\n".join(lines)
 
+    if not events and failures:
+        lines.append(
+            "<b>No hi ha cap acte a la finestra</b> a partir de les fonts que han respost. "
+            "Si només una font falla (p. ex. CCCB 504), les altres haurien d’omplir el llistat; "
+            "si tot ve buit, revisa dates, filtres o reexecuta més tard."
+        )
+        lines.append("")
+
     by_area: dict[str, list[EventItem]] = defaultdict(list)
     for e in events:
         by_area[e.area].append(e)
