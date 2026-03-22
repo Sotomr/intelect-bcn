@@ -60,15 +60,26 @@ def _row_key(row: dict[str, Any]) -> str | None:
 
 
 def _decode_utf16_csv(raw: bytes) -> str:
-    """CSV oficial ve en UTF-16 LE amb BOM; la descàrrega truncada trenca parells de bytes."""
+    """CSV oficial ve en UTF-16 LE amb BOM; bytes truncats o corruptes trencaven el decoder estricte."""
     if len(raw) < 4:
         raise ValueError("resposta massa curta per ser un CSV UTF-16")
     # Ordre explícit: BOM FF FE = little-endian
     if raw[:2] == b"\xff\xfe":
-        return raw.decode("utf-16-le")
-    if raw[:2] == b"\xfe\xff":
-        return raw.decode("utf-16-be")
-    return raw.decode("utf-16")
+        codec = "utf-16-le"
+    elif raw[:2] == b"\xfe\xff":
+        codec = "utf-16-be"
+    else:
+        codec = "utf-16"
+    try:
+        text = raw.decode(codec)
+    except UnicodeDecodeError:
+        logger.warning(
+            "Guia CSV: UTF-16 amb seqüència invàlida; es decodifica amb reemplaçament (alguns caràcters poden perdre’s)"
+        )
+        text = raw.decode(codec, errors="replace")
+    if text and text[0] == "\ufeff":
+        text = text[1:]
+    return text
 
 
 def _download_csv_bytes(url: str, *, max_attempts: int = 4) -> bytes:
@@ -123,14 +134,25 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
     Es filtra per paraules clau d’«alta densitat intel·lectual» + finestra temporal (fora d’aquest mòdul).
     """
     logger.info("Guia Barcelona (CSV): baixant %s", csv_url)
-    raw = _download_csv_bytes(csv_url)
-    try:
-        text = _decode_utf16_csv(raw)
-    except UnicodeDecodeError as e:
-        logger.error("Guia CSV: error decodificant UTF-16 (%s). Reintenta més tard.", e)
+    last_decode_err: BaseException | None = None
+    text: str | None = None
+    for round_i in range(1, 3):
+        try:
+            raw = _download_csv_bytes(csv_url)
+            text = _decode_utf16_csv(raw)
+            last_decode_err = None
+            break
+        except (UnicodeDecodeError, ValueError) as e:
+            last_decode_err = e
+            logger.warning("Guia CSV: intent de lectura %s/2 falla: %s", round_i, e)
+            if round_i < 2:
+                time.sleep(4)
+    if text is None:
+        assert last_decode_err is not None
+        logger.error("Guia CSV: no s’ha pogut llegir el CSV després de reintents")
         raise RuntimeError(
             "CSV de la Guia incomplet o corrupte (descàrrega truncada?). Torna a executar."
-        ) from e
+        ) from last_decode_err
 
     reader = csv.DictReader(io.StringIO(text))
     events: list[EventItem] = []

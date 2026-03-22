@@ -4,6 +4,10 @@ import re
 import unicodedata
 from typing import Iterable
 
+from models import EventItem
+
+_RE_D_A = re.compile(r"d['\u2019']a", re.IGNORECASE)
+
 # Paraules que orienten cap a densitat intel·lectual (català/castellà, sense ser exhaustives)
 INCLUDE_TERMS: tuple[str, ...] = (
     "conferència",
@@ -130,6 +134,39 @@ def text_matches_intellect_blob(title: str, extra: str = "") -> bool:
     if any(_norm(x) in blob for x in EXCLUDE_TERMS):
         return False
     return any(_norm(x) in blob for x in INCLUDE_TERMS)
+
+
+def is_noise_title_intellect(title: str) -> bool:
+    """
+    Esdeveniments que passen el filtre per «festival» però són programa de cinema repetit
+    (mateix bloc molts dies al digest), no «idees» al sentit del bot.
+    """
+    if not title or not str(title).strip():
+        return False
+    t = str(title).lower()
+    if "festival de cinema de barcelona" in t:
+        return True
+    if "festival" in t and "cinema" in t and _RE_D_A.search(title):
+        return True
+    return False
+
+
+def filter_noise_events(events: list[EventItem]) -> list[EventItem]:
+    """Elimina soroll editorial abans de deduplicar (totes les fonts)."""
+    import logging
+
+    out: list[EventItem] = []
+    dropped = 0
+    for e in events:
+        if is_noise_title_intellect(e.title):
+            dropped += 1
+            continue
+        out.append(e)
+    if dropped:
+        logging.getLogger(__name__).info(
+            "Filtre soroll: %s esdeveniments exclos (cinema/festival repetit)", dropped
+        )
+    return out
 
 
 def venue_tier_boost(institution_name: str) -> bool:

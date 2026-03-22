@@ -10,6 +10,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from config import load_settings
+from intellect_filters import filter_noise_events
 from dedupe import dedupe_events
 from digest import (
     build_digest_html,
@@ -65,6 +66,7 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
             msg = f"{name}: {e}"
             logger.exception("Scraper falla: %s", name)
             failures.append(msg)
+    events = filter_noise_events(events)
     events = dedupe_events(events)
     logger.info("Total després de deduplicar: %s", len(events))
     return events, failures
