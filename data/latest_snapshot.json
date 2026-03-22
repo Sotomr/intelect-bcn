@@ -1,6 +1,216 @@
 {
-  "fetched_at": "2026-03-22T18:43:28.492015+00:00",
+  "fetched_at": "2026-03-22T19:04:51.793376+00:00",
   "events": [
+    {
+      "institution": "Col·legi d’Enginyers de Barcelona",
+      "title": "El degà d’ENGINYERS BCN assisteix a la presentació de l’eina PLATER",
+      "url": "https://enginyersbcn.cat/actualitat/noticies/el-dega-denginyers-bcn-assisteix-a-la-presentacio-de-leina-plater/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciència i cosmos",
+      "summary": "El 9 de març de 2026, el degà d’ENGINYERS BCN, Ricard Nogués, va assistir a l’acte de presentació de l’eina PLATER a la Conselleria de Territori de la Generalitat de Catalunya, a Barcelona. L’acte va estar encapçalat per la consellera de Territori, Habitatge i Transició Ecològica, Hble. Sra. Sílvia Paneque, acompanyada per la directora general […] The post El degà d’ENGINYERS BCN assisteix a la presentació de l’eina …",
+      "source": "rss:enginyers_bcn",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Col·legi d’Enginyers de Barcelona",
+      "title": "Jornada OTEC 2026: Energies renovables per a empreses",
+      "url": "https://enginyersbcn.cat/actualitat/noticies/jornada-otec-2026-energies-renovables-per-a-empreses/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciència i cosmos",
+      "summary": "La descarbonització del teixit productiu i l’adaptació a la normativa energètica vigent s’han convertit en eixos prioritaris per als nostres enginyers col·legiats en entorns industrials altament regulats. The post Jornada OTEC 2026: Energies renovables per a empreses appeared first on ENGINYERS BCN .",
+      "source": "rss:enginyers_bcn",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Col·legi d’Enginyers de Barcelona",
+      "title": "Jornada OTEC: Energies renovables per empreses 2026",
+      "url": "https://enginyersbcn.cat/actualitat/noticies/jornada-otec-energies-renovables-per-empreses-2026/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciència i cosmos",
+      "summary": "Les Oficines de Transició Energètica Col·legials (OTEC) organitzen una jornada gratuïta adreçada principalment a empreses amb l’objectiu donar resposta als principals dubtes i necessitats que el teixit empresarial té a l’hora d’afrontar la transició energètica. The post Jornada OTEC: Energies renovables per empreses 2026 appeared first on ENGINYERS BCN .",
+      "source": "rss:enginyers_bcn",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Col·legi d’Enginyers de Barcelona",
+      "title": "La ventilació eficient i la qualitat de l’aire interior, claus en l’edificació del futur",
+      "url": "https://enginyersbcn.cat/actualitat/noticies/la-ventilacio-eficient-i-la-qualitat-de-laire-interior/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciència i cosmos",
+      "summary": "La qualitat de l’aire interior i l’eficiència energètica s’han consolidat com dos dels grans reptes del sector de l’edificació. The post La ventilació eficient i la qualitat de l’aire interior, claus en l’edificació del futur appeared first on ENGINYERS BCN .",
+      "source": "rss:enginyers_bcn",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Col·legi d’Enginyers de Barcelona",
+      "title": "Webinar sobre automatització del disseny elèctric: eficiència, coherència i integració amb SEE Electrical",
+      "url": "https://enginyersbcn.cat/actualitat/noticies/webinar-sobre-automatitzacio-del-disseny-electric/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Ciència i cosmos",
+      "summary": "El COGITI, els Col·legis Oficials i ETAP impulsen un webinar sobre automatització del disseny elèctric gratuït “De la Ingeniería al Armario Eléctrico: Conectando Diseño y Fabricación de Forma Eficiente y sin Fricciones con SEE Electrical”. The post Webinar sobre automatització del disseny elèctric: eficiència, coherència i integració amb SEE Electrical appeared first on ENGINYERS BCN .",
+      "source": "rss:enginyers_bcn",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "\"Si algú diu que el llenguatge és una cosa purament humana és que no ha viscut amb un animal\"",
+      "url": "https://llegim.ara.cat/entrevistes/algu-diu-llenguatge-cosa-purament-humana-no-viscut-animal_128_5680911.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Cultura i espai públic",
+      "summary": "L’artista visual i escriptora Alicia Kopf (Imma Ávalos, Girona, 1982) torna a les llibreries i posa fi a una aturada d'una dècada. Després de l’èxit de Germà de gel , amb la qual va obtenir el Premi Documenta i el Premi Llibreter , traduïda a deu llengües, ara publica Memòria d’Eco , també a L’Altra Editorial. Si a Germà de gel partia del projecte artístic Anticantàrtic i s’ocupava de les exploracions al pol Nord per…",
+      "source": "rss:ara_cultura",
+      "rss_source_kind": "media"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "81.513 espectadors: un dissabte de rècord absolut per al teatre català",
+      "url": "https://www.ara.cat/cultura/teatre/81-513-espectadors-dissabte-record-absolut-teatre-catala-cap-butaca-buida_1_5685497.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Cultura i espai públic",
+      "summary": "Repte superat. Per tercer any consecutiu, el sector de les arts escèniques de Catalunya ha celebrat la Diada del Teatre, que aquest dissabte ha aconseguit omplir 81.513 butaques de les més de 92.000 disponibles en els 261 teatres adherits a la campanya Cap Butaca Buida , que oferia 305 espectacles i 347 funcions. La xifra final d'espectadors, que s’ha anunciat al vespre en un acte celebrat a l’Antiga Fàbrica Damm, re…",
+      "source": "rss:ara_cultura",
+      "rss_source_kind": "media"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "Ara que els homes joves menyspreen el feminisme",
+      "url": "https://www.ara.cat/cultura/teatre/ara-homes-joves-menyspreen-feminisme_1_5672027.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Cultura i espai públic",
+      "summary": "Record inevitable d’una funció força significativa en la història del Teatre Lliure i proposta de futur amb una jove companyia. La nit de les tríbades (o sigui, lesbianes) es va estrenar el 1978 sota la direcció de Fabià Puigserver i amb Anna Lizaran, Quim Lecina, Domènec Reixach i Muntsa Alcañiz, qui va assistir a l’estrena de la nova proposta en el romàntic Teatre de Sarrià i que en acabar la funció va rebre una fl…",
+      "source": "rss:ara_cultura",
+      "rss_source_kind": "media"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "Rosalía demana disculpes per les seves paraules sobre Picasso: \"No era conscient que hi havia casos reals de maltractament\"",
+      "url": "https://www.ara.cat/gent/rosalia-demana-disculpes-seves-paraules-picasso-no-conscient-hi-havia-casos-reals-maltractament_1_5678880.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Cultura i espai públic",
+      "summary": "La cantant Rosalía s'ha retractat de la seva opinió sobre Pablo Picasso, que expressava en una entrevista amb l'escriptora argentina Mariana Enríquez organitzada per Spotify. A la conversa, les dues artistes debatien sobre Picasso i Rosalía deia: \"M'agrada molt Picasso i mai m'ha molestat diferenciar l'artista de l'obra. Potser no m'hauria caigut bé per les coses que m'han explicat, però qui sap, potser sí. No ho sé …",
+      "source": "rss:ara_cultura",
+      "rss_source_kind": "media"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "“Si ara anés a Egipte m’arrestarien immediatament”",
+      "url": "https://www.ara.cat/cultura/cinema/tarik-saleh-aguilas-cairo-arab-pel-licules-monstres_128_5676347.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Cultura i espai públic",
+      "summary": "Amb Águilas de El Cairo , que s’estrena aquest divendres, Tarik Saleh (Estocolm, 1972) tanca la seva trilogia de thrillers ambientats a Egipte, el país del seu pare i on ell mateix va estudiar art a principis dels noranta. El nou film segueix un famós actor a qui el règim d’Al-Sisi pressiona perquè accepti un paper a major glòria del general que governa Egipte des del 2014. Cinema, sexe, política, secrets i mentides …",
+      "source": "rss:ara_cultura",
+      "rss_source_kind": "media"
+    },
+    {
+      "institution": "Ara Cultura",
+      "title": "La novel·la que confirma Miquel de Palol com un dels titans de la literatura contemporània",
+      "url": "https://llegim.ara.cat/critiques-literaries/novel-confirma-miquel-palol-dels-titans-literatura-contemporania_1_5675069.html",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "nerd",
+      "area": "Literatura i idees",
+      "summary": "Els arxius desclassificats d’aquest ésser humà menyspreable i sòrdid conegut com a Jeffrey Epstein ens confirmen una veritat terrible que unes quantes persones sospitàvem des de feia temps: que el món imita les novel·les de Thomas Pynchon i Miquel de Palol més que no pas a la inversa.",
+      "source": "rss:ara_cultura",
+      "rss_source_kind": "media"
+    },
+    {
+      "institution": "Col·legi d’Enginyers de Barcelona",
+      "title": "Últims dies per presentar candidatures a les Comissions d’ENGINYERS BCN",
+      "url": "https://enginyersbcn.cat/actualitat/noticies/ultims-dies-per-presentar-candidatures-a-les-comissions-denginyers-bcn/",
+      "starts_at": "2026-03-25",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-25",
+      "tier": "nerd",
+      "area": "Ciència i cosmos",
+      "summary": "En el marc del procés electoral 2026-2028 i d’acord amb el calendari establert, ENGINYERS BCN entra en la fase final de presentació de candidatures. Cal destacar que el termini es tancarà el pròxim 25 de març a les 19 h. Presentació de candidatures: requisits i procediment Els membres de les comissions que vulguin optar a […] The post Últims dies per presentar candidatures a les Comissions d’ENGINYERS BCN appeared fi…",
+      "source": "rss:enginyers_bcn",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Hangar",
+      "title": "Alto el Foc pel Líban #7",
+      "url": "https://hangar.org/ca/agenda-hangar/alto-el-foc-pel-liban-7/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "premium",
+      "area": "Art i cultura crítica",
+      "summary": "Presentem una nova sessió de Pel·lícules per un Alto el Foc, per continuar sostenint un espai d’atenció, denúncia i acció davant del genocidi que l’estat d’Israel sotmet a la població palestina i la seva metàstasi als pobles veïns. En aquesta ocasió, insistim en la necessitat urgent d’un alto el foc i en la condemna dels [...]",
+      "source": "rss:hangar",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Hangar",
+      "title": "Resolució de la convocatòria de residència de recerca a La Nueva Fábrica, Guatemala",
+      "url": "https://hangar.org/ca/resolutions/resolucion-de-la-convocatoria-de-residencia-de-investigacion-en-la-nueva-fabrica-guatemala/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "premium",
+      "area": "Art i cultura crítica",
+      "summary": "El comitè de selecció, format per Ilaria Conti de La Nueva Fábrica (Guatemala), Soledad Gutiérrez (jurat estable d’Hangar) i Veronica Valentini d’Hangar (Barcelona), ha decidit atorgar la residència de recerca a La Nueva Fábrica (Guatemala) a l’artista Andi Icaza-Largaespada, quedant Lara Campos com a segona candidata a la llista d’espera. En paraules de l’equip de La [...]",
+      "source": "rss:hangar",
+      "rss_source_kind": "institutional"
+    },
+    {
+      "institution": "Hangar",
+      "title": "Resolució de la convocatòria de residència de recerca a Pivô Salvador",
+      "url": "https://hangar.org/ca/resolutions/resolucion-de-la-convocatoria-de-residencia-de-investigacion-en-pivo-salvador/",
+      "starts_at": "2026-03-22",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-22",
+      "tier": "premium",
+      "area": "Art i cultura crítica",
+      "summary": "El comitè de selecció, format per Ramon Martins i Fernanda Brenner de Pivô (São Paulo), Agustín Ortiz Herrera (jurat estable d’Hangar) i Veronica Valentini d’Hangar (Barcelona), ha decidit atorgar la residència de recerca a Pivô Salvador a l’artista Anna Pasco, quedant Agnes Essonti en llista d’espera. En paraules de l’equip de Pivô: “La selecció d’Anna Pasco es [...]",
+      "source": "rss:hangar",
+      "rss_source_kind": "institutional"
+    },
     {
       "institution": "CCCB",
       "title": "Visita el Mirador del CCCB 2026",
@@ -12,7 +222,8 @@
       "tier": "premium",
       "area": "Cultura i espai públic",
       "summary": "Visita el Mirador del CCCB 2026",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -25,7 +236,8 @@
       "tier": "premium",
       "area": "Filosofia i pensament",
       "summary": "Escriptura i poder. Cursos i tallers Institut d’Humanitats",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -38,7 +250,8 @@
       "tier": "premium",
       "area": "Cultura i espai públic",
       "summary": "Visita guiada a l'exposició «Rodoreda, un bosc». Amics CCCB",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -51,7 +264,8 @@
       "tier": "premium",
       "area": "Cultura i espai públic",
       "summary": "«Rodoreda, un bosc» per a persones amb ceguesa o baixa visió. Accessible Rodoreda, un bosc",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -64,7 +278,8 @@
       "tier": "premium",
       "area": "Cultura i espai públic",
       "summary": "Craig Calhoun, María Pía Lara i Camil Ungureanu. Debats",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -77,7 +292,8 @@
       "tier": "premium",
       "area": "Filosofia i pensament",
       "summary": "Infanteses. Cursos i tallers Institut d’Humanitats",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -90,7 +306,8 @@
       "tier": "premium",
       "area": "Cultura i espai públic",
       "summary": "Michel Nieva. Debats",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -103,7 +320,8 @@
       "tier": "premium",
       "area": "Cultura visual i ciutat",
       "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     },
     {
       "institution": "CCCB",
@@ -116,7 +334,22 @@
       "tier": "premium",
       "area": "Tecnologia i computació",
       "summary": "Cossos, dades i mercat. Cursos i tallers Institut d’Humanitats",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
+    },
+    {
+      "institution": "Hangar",
+      "title": "Abundance Radar x dublabBCN",
+      "url": "https://hangar.org/ca/agenda-hangar/abundance-radar-x-dublabbcn-2/",
+      "starts_at": "2026-03-27",
+      "ends_at": null,
+      "label": "RSS",
+      "raw_date": "2026-03-27",
+      "tier": "premium",
+      "area": "Art i cultura crítica",
+      "summary": "El 27 de març, el col·lectiu orbital Dublab presenta Abundance Radar, una trobada oberta dedicada a la creació sonora i a l’exploració del procés musical. En aquesta ocasió, l’espai és organitzat i acollit per dublabBCN en col·laboració amb Abundance, i convida a compartir projectes propis en desenvolupament, escoltar col·lectivament i intercanviar feedback en un ambient obert i constructiu. Cada [...]",
+      "source": "rss:hangar",
+      "rss_source_kind": "institutional"
     },
     {
       "institution": "CCCB",
@@ -129,7 +362,8 @@
       "tier": "premium",
       "area": "Cultura visual i ciutat",
       "summary": "Estrena de «Simfonies de ciutat» 2026. Audiovisuals Simfonies de ciutat",
-      "source": "cccb"
+      "source": "cccb",
+      "rss_source_kind": ""
     }
   ]
 }
