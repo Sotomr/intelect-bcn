@@ -200,8 +200,10 @@ def editorial_score(e: EventItem) -> float:
     if "portes obertes" in tb:
         s -= 8.0
     src = (e.source or "")
-    if src.startswith("rss:") or src in ("cidob", "guia_bcn"):
+    if src in ("cidob", "guia_bcn"):
         s += 5.0
+    if src.startswith("rss:") and "iec" in _norm(e.institution):
+        s += 4.0
     if "cidob" in _norm(e.institution):
         s += 6.0
     if "iec" in _norm(e.institution) or "scm" in _norm(e.institution):
@@ -213,16 +215,27 @@ def editorial_blurb(e: EventItem) -> str:
     t = _norm(f"{e.title} {e.label}")
     summ = (e.summary or "").strip()
     title_n = _norm(e.title or "")
-    # Resum del feed (sobretot RSS ja net): aporta el «per què m’importa».
-    if summ and len(summ) > 50:
-        if _norm(summ[:140]) != _norm((e.title or "")[:140]):
-            return summ[:240] + ("…" if len(summ) > 240 else "")
+    lab = _norm(e.label or "")
+    # Debats CCCB amb ponents (títol només amb noms): abans que el resum dupliqui el títol.
     if "debat" in t or "debats" in t:
-        return "Debat amb densitat; bon marc per seguir el fil argumental."
+        if any(x in t for x in ("calhoun", "ungureanu", "lara")):
+            return (
+                "Debat amb ponents de referència en teoria política i filosofia social; "
+                "marc útil per pensar democràcia i esfera pública."
+            )
+        if "nieva" in t:
+            return "Debat poètic i literari dins el cicle del CCCB; bon to si et mou la paraula en escena."
+        if "," in (e.title or "") and len((e.title or "").split(",")) >= 2:
+            return "Taula amb diversos ponents; conversa amb pes específic al voltant del tema del cicle."
+        return "Debat amb densitat; convé mirar el fil del cicle («Debats») per situar el marc."
     if "conferència" in t or "conferencia" in t:
         return "Conferència amb cos; útil per situar conceptes i autors."
     if "seminari" in t or "col·loqui" in t:
         return "Format seminarial: aprofundiment i intercanvi."
+    if "taller" in t or " curs" in t or "curs " in t or "institut d'humanitats" in t:
+        return (
+            "Taller o curs del CCCB (Institut d’Humanitats): útil si vols aprofundir en el tema amb guia."
+        )
     if "filosofia" in t or "pensament" in t or "humanitats" in t:
         return "Filosofia i pensament crític al centre."
     if "polític" in t or "democràcia" in t or "geopol" in t:
@@ -233,10 +246,12 @@ def editorial_blurb(e: EventItem) -> str:
         return "Literatura i idees en primer pla."
     if "visita" in t and "debat" not in t:
         return "Activitat de descobriment; menys densitat de debat que una taula o conferència."
-    if "," in (e.title or "") and len(e.title or "") > 35:
-        return "Taula amb diversos ponents; conversa amb pes específic."
-    if summ and len(summ) > 25:
-        return summ[:200] + ("…" if len(summ) > 200 else "")
+    # Resum del feed (RSS): només si afegeix context respecte al títol.
+    if summ and len(summ) > 50:
+        if _norm(summ[:140]) != _norm((e.title or "")[:140]):
+            return summ[:240] + ("…" if len(summ) > 240 else "")
+    if lab and len(lab) > 3 and lab not in title_n:
+        return f"Marc: {e.label[:120]}{'…' if len(e.label or '') > 120 else ''}"
     return "Proposta dins el radar intel·lectual de la setmana."
 
 
@@ -246,15 +261,29 @@ def pick_highlights(
     k: int = 7,
     max_per_source: int = 3,
 ) -> tuple[list[EventItem], list[EventItem]]:
-    """Selecció greedy per puntuació amb quota suau per font (evita monopol del CCCB)."""
+    """
+    Qualitat primer: el pool de candidats a destacat és només el que cau **a prop**
+    del millor de la setmana (no es reemplaça un CCCB fort per un RSS feble).
+    Després, diversitat de fonts dins aquest pool.
+    """
     evs = list(events)
     if not evs:
         return [], []
-    scored = sorted(evs, key=lambda e: editorial_score(e), reverse=True)
+    scored_pairs = sorted(
+        ((e, editorial_score(e)) for e in evs),
+        key=lambda x: (-x[1], x[0].starts_at or "", x[0].title),
+    )
+    top_score = scored_pairs[0][1]
+    floor = max(42.0, top_score - 16.0)
+    pool = [e for e, s in scored_pairs if s >= floor]
+    if len(pool) < min(k, len(evs)):
+        floor = max(36.0, top_score - 24.0)
+        pool = [e for e, s in scored_pairs if s >= floor]
+
     picked: list[EventItem] = []
     counts: dict[str, int] = defaultdict(int)
     picked_titles: set[str] = set()
-    for e in scored:
+    for e in pool:
         if len(picked) >= k:
             break
         tk = _title_key(e.title)
@@ -266,6 +295,22 @@ def pick_highlights(
         picked.append(e)
         counts[b] += 1
         picked_titles.add(tk)
+    if len(picked) < k:
+        floor2 = max(34.0, top_score - 30.0)
+        for e, s in scored_pairs:
+            if len(picked) >= k:
+                break
+            if s < floor2:
+                continue
+            tk = _title_key(e.title)
+            if tk in picked_titles:
+                continue
+            b = source_bucket(e)
+            if counts[b] >= max_per_source:
+                continue
+            picked.append(e)
+            picked_titles.add(tk)
+            counts[b] += 1
     keys = {e.stable_key() for e in picked}
     rest = [e for e in evs if e.stable_key() not in keys]
     rest.sort(key=lambda e: (-editorial_score(e), e.starts_at or "", e.title))

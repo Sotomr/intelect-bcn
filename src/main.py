@@ -14,6 +14,7 @@ if str(_ROOT) not in sys.path:
 from config import load_settings
 from intellect_filters import filter_noise_events
 from dedupe import dedupe_events
+from rss_event_filter import filter_product_events
 from digest import (
     build_digest_html,
     filter_events_in_window,
@@ -83,6 +84,8 @@ def _run_scrapers(settings) -> tuple[list[EventItem], list[str]]:
     events = filter_noise_events(events)
     events = dedupe_events(events)
     logger.info("Total després de deduplicar: %s", len(events))
+    events = filter_product_events(events)
+    logger.info("Total després de filtres de producte (no-agenda / soroll): %s", len(events))
     return events, failures
 
 

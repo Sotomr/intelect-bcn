@@ -15,6 +15,7 @@ import requests
 
 from intellect_filters import classify_area, text_matches_intellect_blob
 from models import EventItem
+from rss_event_filter import rss_entry_is_valid_event
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +198,14 @@ def _fetch_one_feed(spec: RssFeed, *, max_per_feed: int, timeout: tuple[float, f
             continue
         n += 1
         plain_for_item = _entry_plain_summary(e, title)
+        full_plain = _strip_html(summary)[:2500]
+        if not rss_entry_is_valid_event(
+            source_id=spec.source_id,
+            title=title,
+            summary=full_plain,
+            link=link,
+        ):
+            continue
         out.append(
             EventItem(
                 institution=spec.institution,

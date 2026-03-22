@@ -139,7 +139,12 @@ def _radar_summary_line(events: list[EventItem], failures: list[str]) -> str:
         else:
             c[s or "?"] += 1
     parts = [f"{k}: {v}" for k, v in sorted(c.items(), key=lambda x: (-x[1], x[0]))]
-    line = "<b>Radar:</b> " + str(len(events)) + " actes a la finestra — " + " · ".join(parts)
+    line = (
+        "<b>Radar:</b> "
+        + str(len(events))
+        + " propostes a la finestra (sessions i actes, després de filtres) — "
+        + " · ".join(parts)
+    )
     if failures:
         line += f" · <i>{len(failures)} font(s) sense resposta (detall al final)</i>"
     return line
