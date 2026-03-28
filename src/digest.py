@@ -11,6 +11,7 @@ Format:
 from __future__ import annotations
 
 import html
+import logging
 import re
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -22,10 +23,27 @@ from intellect_filters import is_noise_title_intellect, text_matches_intellect_b
 from models import EventItem
 from selector import SelectionResult, score_event, select_candidates
 
+logger = logging.getLogger(__name__)
+
+_CURATED_DIGEST_SOURCES = frozenset({"cccb", "cidob", "iccub", "icfo", "ice_csic"})
+
 
 def _src_base(source: str) -> str:
     s = (source or "").strip()
     return s.split(":")[0] if ":" in s else s
+
+
+def _editorial_digest_candidates(events: list[EventItem]) -> list[EventItem]:
+    """Mateix criteri al cos del digest i a «Novetats» (una sola font de veritat)."""
+    return [
+        e for e in events
+        if not is_noise_title_intellect(e.title)
+        and (
+            _src_base(e.source) in _CURATED_DIGEST_SOURCES
+            or e.source.startswith("rss:")
+            or text_matches_intellect_blob(e.title, e.summary)
+        )
+    ]
 
 
 def _parse_event_date(e: EventItem) -> date | None:
@@ -196,19 +214,17 @@ def build_digest_html(
         "",
     ]
 
-    _CURATED_SOURCES = frozenset({"cccb", "cidob", "iccub", "icfo", "ice_csic"})
-    events = [
-        e for e in events
-        if not is_noise_title_intellect(e.title)
-        and (
-            _src_base(e.source) in _CURATED_SOURCES
-            or e.source.startswith("rss:")
-            or text_matches_intellect_blob(e.title, e.summary)
-        )
-    ]
+    n_before_editorial = len(events)
+    events = _editorial_digest_candidates(events)
+    logger.info(
+        "Digest filtre editorial: %s → %s candidats (finestra)",
+        n_before_editorial,
+        len(events),
+    )
 
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra.")
+        logger.info("Digest: cap candidat després del filtre editorial")
         return "\n".join(lines)
 
     if not events and failures:
@@ -239,6 +255,13 @@ def build_digest_html(
         highlights, main_rest, expanded = _apply_global_source_cap(
             highlights, main_rest, expanded,
             global_max=global_max_per_source,
+        )
+
+        logger.info(
+            "Digest seccions: destacats=%s recomanacions=%s agenda=%s (abans de límit Telegram)",
+            len(highlights),
+            len(main_rest),
+            len(expanded),
         )
 
         # Destacats
@@ -285,16 +308,7 @@ def format_novelties_html(
 ) -> str:
     if not events:
         return ""
-    _CURATED_SOURCES = frozenset({"cccb", "cidob", "iccub", "icfo", "ice_csic"})
-    events = [
-        e for e in events
-        if not is_noise_title_intellect(e.title)
-        and (
-            _src_base(e.source) in _CURATED_SOURCES
-            or e.source.startswith("rss:")
-            or text_matches_intellect_blob(e.title, e.summary)
-        )
-    ]
+    events = _editorial_digest_candidates(events)
     _apply_areas(events)
     worthy = [
         e for e in events

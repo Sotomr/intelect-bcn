@@ -40,6 +40,7 @@ class Settings:
     digest_score_floor_recommendation: int
     digest_score_floor_expanded: int
     digest_score_floor_novelties: int
+    enrich_guia: bool
 
 
 def _rss_feed_set() -> str:
@@ -55,6 +56,13 @@ def _rss_feed_set() -> str:
     if v in ("all", "institutional", "media"):
         return v
     return "institutional"
+
+
+def _bool_env(name: str, default: bool) -> bool:
+    raw = (os.getenv(name) or "").strip().lower()
+    if raw in ("",):
+        return default
+    return raw in ("1", "true", "yes", "on")
 
 
 def _int_env(name: str, default: int) -> int:
@@ -117,4 +125,5 @@ def load_settings() -> Settings:
         digest_score_floor_recommendation=max(0, min(100, _int_env("DIGEST_SCORE_FLOOR_RECOMMENDATION", 40))),
         digest_score_floor_expanded=max(0, min(100, _int_env("DIGEST_SCORE_FLOOR_EXPANDED", 30))),
         digest_score_floor_novelties=max(0, min(100, _int_env("DIGEST_SCORE_FLOOR_NOVELTIES", 40))),
+        enrich_guia=_bool_env("ENRICH_GUIA", False),
     )

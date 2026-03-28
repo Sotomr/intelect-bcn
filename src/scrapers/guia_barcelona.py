@@ -40,6 +40,21 @@ def _short_summary(title: str, max_len: int = 130) -> str:
     return cut + "…"
 
 
+def _digest_intellect_summary(title: str, filt: str, max_len: int = 400) -> str:
+    """Context per al filtre del digest: el digest fa blob = títol + summary.
+
+    Ha de coincidir amb el scrape (name + filt); si summary és només el títol, el digest
+    és més estricte que el CSV i gairebé tota la Guia desapareix.
+    """
+    f = " ".join((filt or "").split())
+    if not f:
+        return _short_summary(title)
+    if len(f) <= max_len:
+        return f
+    cut = f[: max_len - 1].rsplit(" ", 1)[0]
+    return cut + "…"
+
+
 def _parse_start_date(val: str | None) -> str | None:
     if not val or not str(val).strip():
         return None
@@ -216,7 +231,7 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
             raw_date=start,
             tier=tier,
             area=area,
-            summary=_short_summary(name),
+            summary=_digest_intellect_summary(name, filt),
             source="guia_bcn",
             event_kind=ek,
             confidence="high",

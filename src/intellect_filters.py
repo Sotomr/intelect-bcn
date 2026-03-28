@@ -340,7 +340,8 @@ def filter_noise_events(events: list[EventItem]) -> list[EventItem]:
         out.append(e)
     if dropped:
         logging.getLogger(__name__).info(
-            "Filtre soroll: %s esdeveniments exclos (cinema/festival repetit)", dropped
+            "Filtre soroll títol: %s esdeveniments exclos (patrons combinats / soroll editorial)",
+            dropped,
         )
     return out
 

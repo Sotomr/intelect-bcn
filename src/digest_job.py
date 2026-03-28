@@ -56,6 +56,11 @@ def run_digest() -> int:
 
     candidates = _load_candidates(candidates_path)
     logger.info("Candidats carregats: %s", len(candidates))
+    if not candidates and candidates_path.exists():
+        logger.warning(
+            "Fitxer de candidats buit o sense entrades vàlides: %s (executa ingest abans)",
+            candidates_path,
+        )
 
     windowed = filter_events_in_window(
         candidates,

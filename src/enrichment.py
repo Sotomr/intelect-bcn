@@ -261,20 +261,37 @@ def enrich_batch(
     *,
     max_workers: int = 4,
     only_high_quality: bool = True,
+    enrich_guia: bool = True,
 ) -> list[EventItem]:
     """
     Enriqueix en paral·lel. Si only_high_quality=True, només enriqueix
     candidats amb source_quality != "exploratory" (no gastar requests en soroll).
+
+    enrich_guia=False evita milers de HTTP a guia.barcelona.cat (ingest molt més ràpid).
     """
     to_enrich = []
     skip = []
+    skipped_guia = 0
     for e in events:
         if e.detail_fetched:
             skip.append(e)
         elif only_high_quality and e.source_quality == "exploratory":
             skip.append(e)
+        elif not enrich_guia:
+            src = (e.source or "").split(":")[0] if e.source and ":" in e.source else (e.source or "")
+            if src == "guia_bcn":
+                skipped_guia += 1
+                skip.append(e)
+            else:
+                to_enrich.append(e)
         else:
             to_enrich.append(e)
+
+    if skipped_guia:
+        logger.info(
+            "Enriquiment: %s entrades Guia sense HTTP (ENRICH_GUIA=0)",
+            skipped_guia,
+        )
 
     if not to_enrich:
         return events

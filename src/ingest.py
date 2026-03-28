@@ -29,6 +29,7 @@ from scrapers.iccub import fetch_iccub_events
 from scrapers.icfo import fetch_icfo_events
 from scrapers.ice_csic import fetch_ice_csic_events
 from scrapers.rss_feeds import fetch_rss_feeds
+from intellect_filters import filter_noise_events
 from validation import validate_events
 
 logging.basicConfig(
@@ -109,11 +110,18 @@ def run_ingest() -> int:
                 ", ".join(f"{k}={v}" for k, v in sorted(c.items(), key=lambda x: (-x[1], x[0]))))
 
     validated = validate_events(raw)
+    validated = filter_noise_events(validated)
     merged = existing + validated
     deduped = dedupe_events(merged)
     logger.info("Després de validació + dedup (amb existents): %s", len(deduped))
 
-    enriched = enrich_batch(deduped, max_workers=4)
+    enriched = enrich_batch(
+        deduped,
+        max_workers=4,
+        enrich_guia=settings.enrich_guia,
+    )
+    if not settings.enrich_guia:
+        logger.info("ENRICH_GUIA=0: s’omet enriquiment HTTP de Guia Barcelona (ingest més ràpid)")
 
     _save_candidates(candidates_path, enriched)
 
