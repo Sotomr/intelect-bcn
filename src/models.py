@@ -5,6 +5,19 @@ import unicodedata
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
+# Valors de lloc genèrics (Open Data Guia, legacy); no s'han de mostrar ni puntuar com a venue real.
+PLACEHOLDER_PLACES: frozenset[str] = frozenset({"barcelona (lloc)", "barcelona"})
+
+
+def clean_placeholder_place(value: str | None) -> str:
+    """Buida institució o adreça quan només indiquen «Barcelona» genèric."""
+    v = (value or "").strip()
+    if not v:
+        return ""
+    if v.lower() in PLACEHOLDER_PLACES:
+        return ""
+    return v
+
 
 @dataclass
 class EventItem:
@@ -46,7 +59,7 @@ class EventItem:
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
-            "institution": self.institution,
+            "institution": clean_placeholder_place(self.institution),
             "title": self.title,
             "url": self.url,
             "starts_at": self.starts_at,
@@ -61,7 +74,7 @@ class EventItem:
             "event_kind": self.event_kind or "",
             "confidence": self.confidence or "low",
             "starts_at_time": self.starts_at_time or "",
-            "venue": self.venue or "",
+            "venue": clean_placeholder_place(self.venue),
             "city": self.city or "Barcelona",
             "speakers": self.speakers or "",
             "source_quality": self.source_quality or "good",
@@ -77,7 +90,7 @@ class EventItem:
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "EventItem":
         return EventItem(
-            institution=d["institution"],
+            institution=clean_placeholder_place(d.get("institution")),
             title=d["title"],
             url=d["url"],
             starts_at=d.get("starts_at"),
@@ -92,7 +105,7 @@ class EventItem:
             event_kind=d.get("event_kind") or "",
             confidence=d.get("confidence") or "low",
             starts_at_time=d.get("starts_at_time") or "",
-            venue=d.get("venue") or "",
+            venue=clean_placeholder_place(d.get("venue")),
             city=d.get("city") or "Barcelona",
             speakers=d.get("speakers") or "",
             detail_text=d.get("detail_text") or "",
@@ -116,6 +129,8 @@ def classify_event_kind(title: str, label: str = "", source: str = "") -> str:
     t = _nkind(f"{title} {label}")
     if "debat" in t or "debats" in t:
         return "debat"
+    if "taula rodona" in t or "mesa rodona" in t or "mesa redonda" in t:
+        return "debat"
     if "col.loqui" in t or "col·loqui" in t or "coloquio" in t:
         return "debat"
     if "conferencia" in t:
@@ -126,6 +141,10 @@ def classify_event_kind(title: str, label: str = "", source: str = "") -> str:
         return "xerrada"
     if "presentacio" in t:
         return "presentacio"
+    if "concert" in t or "orquestra" in t or "simfonic" in t or "recital" in t:
+        return "concert"
+    if "espectacle" in t or "show " in t or "circ " in t or "circ:" in t:
+        return "espectacle"
     if "visita guiada" in t or (t.startswith("visita ") and "exposici" in t):
         return "visita"
     if "visita" in t or "mirador" in t:

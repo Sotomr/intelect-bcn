@@ -18,8 +18,14 @@ from typing import Iterable
 from zoneinfo import ZoneInfo
 
 from editorial import classify_area, display_source_line
+from intellect_filters import is_noise_title_intellect, text_matches_intellect_blob
 from models import EventItem
 from selector import SelectionResult, score_event, select_candidates
+
+
+def _src_base(source: str) -> str:
+    s = (source or "").strip()
+    return s.split(":")[0] if ":" in s else s
 
 
 def _parse_event_date(e: EventItem) -> date | None:
@@ -90,7 +96,7 @@ def _format_highlight_block(r: SelectionResult) -> str:
     time_venue_parts: list[str] = [f"<b>{when}</b>"]
     if e.starts_at_time:
         time_venue_parts.append(e.starts_at_time + "h")
-    venue = e.venue or e.institution
+    venue = display_source_line(e)
     if venue:
         time_venue_parts.append(html.escape(venue))
 
@@ -190,6 +196,17 @@ def build_digest_html(
         "",
     ]
 
+    _CURATED_SOURCES = frozenset({"cccb", "cidob", "iccub", "icfo", "ice_csic"})
+    events = [
+        e for e in events
+        if not is_noise_title_intellect(e.title)
+        and (
+            _src_base(e.source) in _CURATED_SOURCES
+            or e.source.startswith("rss:")
+            or text_matches_intellect_blob(e.title, e.summary)
+        )
+    ]
+
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra.")
         return "\n".join(lines)
@@ -268,6 +285,16 @@ def format_novelties_html(
 ) -> str:
     if not events:
         return ""
+    _CURATED_SOURCES = frozenset({"cccb", "cidob", "iccub", "icfo", "ice_csic"})
+    events = [
+        e for e in events
+        if not is_noise_title_intellect(e.title)
+        and (
+            _src_base(e.source) in _CURATED_SOURCES
+            or e.source.startswith("rss:")
+            or text_matches_intellect_blob(e.title, e.summary)
+        )
+    ]
     _apply_areas(events)
     worthy = [
         e for e in events

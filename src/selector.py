@@ -18,7 +18,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
-from models import EventItem
+from models import EventItem, clean_placeholder_place
 
 
 def _norm(s: str) -> str:
@@ -48,11 +48,13 @@ _FORMAT_SCORES: dict[str, int] = {
     "conferencia": 17,
     "seminari": 16,
     "xerrada": 12,
-    "presentacio": 10,
-    "taller": 6,
+    "presentacio": 8,
+    "taller": -2,
     "projeccio": 5,
     "exposicio": 4,
-    "sessio": 2,
+    "sessio": 0,
+    "concert": -20,
+    "espectacle": -20,
     "visita": -15,
     "article": -30,
 }
@@ -86,9 +88,37 @@ _QUALITY_BONUS: dict[str, int] = {
 }
 
 _PENALTY_PATTERNS = (
-    ("infantil", -30), ("infanteses", -30), ("familiar", -30),
+    # Públic infantil / familiar / escolar
+    ("infantil", -40), ("familiar", -40), ("en familia", -40),
+    ("kids", -40), ("nens i nenes", -35),
+    ("primaria", -40), ("secundaria", -40), (" eso ", -40),
+    ("contacontes", -35), ("titella", -35),
+    ("casalet", -40), ("casal d'estiu", -40),
+    # Festes populars / vacances
+    ("pasqua", -35), ("setmana santa", -35),
+    ("festa major", -35), ("carnaval", -30),
+    ("cavalcada", -30), ("correfoc", -30),
+    ("revetlla", -30), ("casteller", -25),
+    # Esport / cos / dansa
+    ("dansa", -30), ("danza", -30), ("ballet", -30),
+    ("swing", -30), ("shuffle", -30), ("hip hop", -30),
+    ("zumba", -35), ("ioga", -25), ("yoga", -25),
+    ("coreograf", -30),
+    # Concerts / espectacles
+    ("concert", -25), ("orquestra", -25), ("simfonic", -25),
+    ("espectacle", -25), ("show", -20), ("circ", -30),
+    ("karaoke", -35), ("stand-up", -20),
+    # Manualitats / tallers genèrics
+    ("manualitat", -30), ("flipbook", -30),
+    ("bestiari", -30), ("bestioles", -30),
+    ("creatiu", -15), ("papiroflexia", -30),
+    # Gastronomia / oci
+    ("tast de vins", -30), ("showcooking", -30),
+    ("escape room", -30), ("mercat", -20),
+    # Altres soroll
     ("mirador", -20),
     ("ceguesa", -15), ("baixa visio", -15), ("portes obertes", -8),
+    ("concurs de cartell", -25),
 )
 
 # ---- Scoring constants ----
@@ -142,7 +172,7 @@ def score_event(e: EventItem) -> int:
         s += _SPEAKERS_BONUS
     if e.starts_at_time:
         s += _TIME_BONUS
-    if e.venue:
+    if clean_placeholder_place(e.venue):
         s += _VENUE_BONUS
 
     if e.is_service_format:
@@ -183,7 +213,9 @@ def _best_sentence(text: str, min_len: int = 25) -> str:
 
 def _heuristic_phrase(e: EventItem) -> str:
     """Frase editorial amb veu: «per què importa», no un snippet sec."""
-    inst = (e.institution or "").strip()
+    inst = clean_placeholder_place(e.institution)
+    if not inst:
+        inst = clean_placeholder_place(e.venue)
     title = (e.title or "").strip()
     speakers = (e.speakers or "").strip()
     detail = (e.detail_text or "").strip()
@@ -212,6 +244,8 @@ def _heuristic_phrase(e: EventItem) -> str:
 
     if fmt and inst:
         return f"{fmt} a {inst}."
+    if fmt:
+        return f"{fmt}."
     return inst or ""
 
 

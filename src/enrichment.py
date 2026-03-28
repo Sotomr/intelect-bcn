@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
 
 from http_client import fetch_text
-from models import EventItem
+from models import EventItem, clean_placeholder_place
 
 logger = logging.getLogger(__name__)
 
@@ -158,33 +158,40 @@ def _enrich_guia(soup: BeautifulSoup, e: EventItem) -> None:
     if not e.starts_at_time:
         e.starts_at_time = _extract_time(text[:3000])
 
-    if not e.institution:
+    if not clean_placeholder_place(e.institution):
         for sel in (".event-detail__place", ".field--name-field-place", ".col-location"):
             el = soup.select_one(sel)
             if el:
-                place = el.get_text(strip=True)
+                place = clean_placeholder_place(el.get_text(strip=True))
                 if place and len(place) > 2:
                     e.institution = place[:120]
                     break
 
-    if not e.venue:
+    if not clean_placeholder_place(e.venue):
         for sel in (".event-detail__address", ".field--name-field-address"):
             el = soup.select_one(sel)
             if el:
-                addr = el.get_text(strip=True)
+                addr = clean_placeholder_place(el.get_text(strip=True))
                 if addr and len(addr) > 4:
                     e.venue = addr[:120]
                     break
+
+    _nav_markers = ("filtrar per tema", "tots els temes", "calendaris de dies",
+                     "cookies", "política de privacitat", "avís legal")
 
     if not e.detail_text:
         desc = soup.select_one(".event-detail__description, .field--name-body, .event-body")
         if desc:
             t = desc.get_text(" ", strip=True)
-            if len(t) > 30:
+            if len(t) > 30 and not any(m in t.lower() for m in _nav_markers):
                 e.detail_text = _clean_text(t, 1500)
         else:
             paras = body.select("p")
-            chunks = [p.get_text(strip=True) for p in paras if len(p.get_text(strip=True)) > 30]
+            chunks = [
+                p.get_text(strip=True) for p in paras
+                if len(p.get_text(strip=True)) > 30
+                and not any(m in p.get_text(strip=True).lower() for m in _nav_markers)
+            ]
             if chunks:
                 e.detail_text = _clean_text(" ".join(chunks[:8]), 1500)
 

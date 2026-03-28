@@ -8,21 +8,27 @@ from models import EventItem
 
 _RE_D_A = re.compile(r"d['\u2019']a", re.IGNORECASE)
 
-# Paraules que orienten cap a densitat intel·lectual (català/castellà, sense ser exhaustives)
-INCLUDE_TERMS: tuple[str, ...] = (
+# Termes que per si sols indiquen densitat intel·lectual alta
+_STRONG_TERMS: tuple[str, ...] = (
     "conferència",
     "conferencia",
     "debat",
     "xerrada",
     "seminari",
     "seminario",
-    "taller",
-    "curs ",
-    " curs",
-    "presentació",
-    "presentacion",
-    "llibre",
-    "literatura",
+    "col·loqui",
+    "coloquio",
+    "tertúlia",
+    "tertulia",
+    "simposi",
+    "simposio",
+    "jornad",
+    "congrés",
+    "congres",
+)
+
+# Termes temàtics: el contingut és intel·lectual independentment del format
+_TOPIC_TERMS: tuple[str, ...] = (
     "filosofia",
     "filosofía",
     "pensament",
@@ -47,45 +53,172 @@ INCLUDE_TERMS: tuple[str, ...] = (
     "geopol",
     "democràcia",
     "democracia",
-    "història",
-    "historia",
+    "literatura",
+    "llibre",
     "assaig",
     "ensayo",
     "investigació",
     "investigacion",
-    "col·loqui",
-    "coloquio",
-    "tertúlia",
-    "tertulia",
-    "convers",
-    "mesa rodona",
-    "mesa redonda",
+    "documental",
+    "història",
+    "historia",
+    "sociologia",
+    "antropolog",
+    "economia",
+    "urbanisme",
+    "arquitectur",
+    "ecologia",
+    "sostenibilitat",
+    "drets humans",
+    "derechos humanos",
+)
+
+# Termes que NOMÉS compten si van acompanyats d'un terme temàtic
+_WEAK_TERMS: tuple[str, ...] = (
+    "taller",
+    "curs ",
+    " curs",
+    "presentació",
+    "presentacion",
     "exposició",
     "exposicion",
     "projecció",
     "proyeccion",
-    "documental",
-    "simposi",
-    "simposio",
-    "jornad",
     "festival",
+    "convers",
+    # Sols rellevant amb terme temàtic o format fort (evita taules rodones «genèriques» sense densitat)
+    "taula rodona",
+    "mesa rodona",
+    "mesa redonda",
 )
+
+INCLUDE_TERMS: tuple[str, ...] = _STRONG_TERMS + _TOPIC_TERMS + _WEAK_TERMS
 
 # Excloure soroll evident (encara que coincideixi amb INCLUDE)
 EXCLUDE_TERMS: tuple[str, ...] = (
+    # Públic infantil / familiar
     "infantil",
     "familiar",
     "en família",
+    "en familia",
     "nadó",
     "nado",
+    "kids",
+    "nens i nenes",
+    "nens ",
+    " nens",
+    "nenes ",
+    "per a petits",
+    "per als petits",
+    "peques",
+    "primària",
+    "primaria",
+    "secundària",
+    "secundaria",
+    " eso ",
+    "3r a 6è",
+    "1r a 3r",
+    "4t a 6è",
+    "p3",
+    "p4",
+    "p5",
+    "contacontes",
+    "conta contes",
+    "titella",
+    "titelles",
+    "animació infantil",
+    # Activitats de vacances / festes populars
+    "casalet",
+    "casal d'estiu",
+    "casal de nadal",
+    "pasqua",
+    "setmana santa",
+    "festa major",
+    "carnaval",
+    "cavalcada",
+    "revetlla",
+    "castellers",
+    "gegants ",
+    "diables",
+    "correfoc",
+    # Esport / cos / dansa
     "activitat esportiva",
     "zumba",
     "gimnàstica",
     "gimnastica",
+    "ioga",
+    "yoga",
+    "pilates",
+    "dansa",
+    "danza",
+    "ballet",
+    "hip hop",
+    "hip-hop",
+    "swing",
+    "salsa",
+    "bachata",
+    "shuffle",
+    "breakdance",
+    "coreograf",
+    # Música / concerts / espectacles
+    "concert",
+    "orquestra",
+    "simfònic",
+    "simfonic",
+    "coral ",
+    "karaoke",
+    "dj session",
+    "circ",
+    "màgia",
+    "magia",
+    "espectacle",
+    "show ",
+    "stand-up",
+    # Manualitats / tallers genèrics
+    "manualitats",
+    "creatiu",
+    "flipbook",
+    "bestiari",
+    "bestioles",
+    "bèsties",
+    "besties",
+    "piu, piu",
+    "fabricació col·lectiva",
+    "fabricacio col·lectiva",
+    "papiroflèxia",
+    "papiroflexia",
+    "ganxet",
+    "punt de creu",
+    "scrapbook",
+    # Concursos / competicions no intel·lectuals
+    "concurs de cartells",
+    "concurs de disfresses",
+    "masterclass de ball",
+    # Altres soroll
     "criança autogestionat",
     "grup de criança",
     "nous vins",
     "cal bardera",
+    "mercat",
+    "fira ",
+    " fira",
+    "botiga",
+    "showcooking",
+    "tast de vins",
+    "tast de cervesa",
+    "escape room",
+    "paintball",
+    "laser tag",
+    "intercanvi de llibres",
+    "recollida de llibres",
+    "bookcrossing",
+    "gent gran",
+    # Cultura lleugera que s'amaga darrere formats «seriosos»
+    "fanzín",
+    "fanzin",
+    " fanzine",
+    "barswing",
+    "barswingona",
 )
 
 # Si el nom del lloc conté aquests fragments, pujem la rellevància (capa «premium» / institucions fortes)
@@ -133,21 +266,64 @@ def text_matches_intellect_blob(title: str, extra: str = "") -> bool:
     blob = _norm(f"{title} {extra}")
     if any(_norm(x) in blob for x in EXCLUDE_TERMS):
         return False
-    return any(_norm(x) in blob for x in INCLUDE_TERMS)
+    if any(_norm(x) in blob for x in _STRONG_TERMS):
+        return True
+    if any(_norm(x) in blob for x in _TOPIC_TERMS):
+        return True
+    if any(_norm(x) in blob for x in _WEAK_TERMS):
+        has_topic = any(_norm(x) in blob for x in _TOPIC_TERMS)
+        has_strong = any(_norm(x) in blob for x in _STRONG_TERMS)
+        return has_topic or has_strong
+    return False
+
+
+_NOISE_COMBOS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("taller", ("animals", "natura", "pasqua", "nadal", "estiu", "primavera",
+                "manualitat", "creatiu", "dibuix", "pintura", "collage",
+                "reciclat", "flor", "planta", "insecte", "ocell",
+                "cos col·lectiu", "cos collectiu")),
+    ("festival", ("cinema", "swing", "dansa", "danza", "ball", "música",
+                  "musica", "rock", "jazz", "reggae", "electrònica",
+                  "electronica", "gastro", "cervesa")),
+    ("concurs", ("cartell", "disfress", "fotografi")),
+)
 
 
 def is_noise_title_intellect(title: str) -> bool:
     """
-    Esdeveniments que passen el filtre per «festival» però són programa de cinema repetit
-    (mateix bloc molts dies al digest), no «idees» al sentit del bot.
+    Detecció de soroll que passa els filtres inicials.
+    Inclou patrons combinats (taller + animal = soroll) i patrons directes.
     """
     if not title or not str(title).strip():
         return False
-    t = str(title).lower()
+    t = _norm(str(title))
     if "festival de cinema de barcelona" in t:
         return True
     if "festival" in t and "cinema" in t and _RE_D_A.search(title):
         return True
+    if any(x in t for x in ("taula rodona", "mesa rodona", "mesa redonda")):
+        if any(
+            x in t
+            for x in (
+                "fanz",
+                "zine",
+                "flipbook",
+                "shuffle showcase",
+                "bestiari",
+                "barswing",
+                "oh! i trans",
+                "casalet",
+                "setmana santa",
+                "festa major",
+                "primaria",
+                "masterclass de ball",
+            )
+        ):
+            return True
+    for trigger, noise_words in _NOISE_COMBOS:
+        if trigger in t:
+            if any(nw in t for nw in noise_words):
+                return True
     return False
 
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from models import EventItem
+from models import EventItem, clean_placeholder_place
 
 
 def _norm(s: str) -> str:
@@ -136,11 +136,13 @@ _SOURCE_DISPLAY_NAMES: dict[str, str] = {
     "gencat": "Gencat",
 }
 
-
 def display_source_line(e: EventItem) -> str:
     """Una sola línia de context: nom de la institució (sense costures internes)."""
-    inst = (e.institution or "").strip()
+    inst = clean_placeholder_place(e.institution)
     if inst:
         return inst
+    venue = clean_placeholder_place(e.venue)
+    if venue:
+        return venue
     src = (e.source or "").strip()
     return _SOURCE_DISPLAY_NAMES.get(src, src)

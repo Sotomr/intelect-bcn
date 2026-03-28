@@ -16,7 +16,7 @@ from intellect_filters import (
     text_matches_intellect_blob,
     venue_tier_boost,
 )
-from models import EventItem, classify_event_kind
+from models import EventItem, classify_event_kind, clean_placeholder_place
 
 logger = logging.getLogger(__name__)
 
@@ -196,15 +196,16 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
         rid = _row_key(row)
         if not rid:
             continue
-        inst = (row.get("institution_name") or "").strip()
+        inst = clean_placeholder_place((row.get("institution_name") or "").strip())
         if not inst:
-            inst = (row.get("addresses_road_name") or "").strip()
+            inst = clean_placeholder_place((row.get("addresses_road_name") or "").strip())
         if not inst:
-            inst = (row.get("addresses_district_name") or "").strip()
+            inst = clean_placeholder_place((row.get("addresses_district_name") or "").strip())
         url = f"https://guia.barcelona.cat/ca/agenda/{rid}"
         tier = "premium" if venue_tier_boost(inst) else "base"
         area = classify_area(name, inst)
         ek = classify_event_kind(name)
+        _service_kinds = {"visita", "concert", "espectacle"}
         ev = EventItem(
             institution=inst,
             title=name,
@@ -220,7 +221,7 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
             event_kind=ek,
             confidence="high",
             source_quality="good",
-            is_service_format=ek == "visita",
+            is_service_format=ek in _service_kinds,
         )
         events.append(ev)
     logger.info("Guia Barcelona (CSV): %s candidats després del filtre intel·lectual", len(events))
