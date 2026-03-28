@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 from editorial import classify_area, display_source_line
 from models import EventItem
-from selector import SelectionResult, select_candidates
+from selector import SelectionResult, score_event, select_candidates
 
 
 def _parse_event_date(e: EventItem) -> date | None:
@@ -122,6 +122,45 @@ def _apply_areas(events: list[EventItem]) -> None:
         e.area = classify_area(e.title, e.institution, e.label)
 
 
+def _source_key(e: EventItem) -> str:
+    s = (e.source or "").strip()
+    if s.startswith("rss:"):
+        return s[:20]
+    return s or "altres"
+
+
+def _apply_global_source_cap(
+    highlights: list[SelectionResult],
+    main_rest: list[SelectionResult],
+    expanded: list[SelectionResult],
+    *,
+    global_max: int,
+) -> tuple[list[SelectionResult], list[SelectionResult], list[SelectionResult]]:
+    """Enforce a global cap per source across all sections.
+
+    Priority: highlights > recommendations > expanded.
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for r in highlights:
+        counts[_source_key(r.event)] += 1
+
+    capped_main: list[SelectionResult] = []
+    for r in main_rest:
+        k = _source_key(r.event)
+        if counts[k] < global_max:
+            capped_main.append(r)
+            counts[k] += 1
+
+    capped_exp: list[SelectionResult] = []
+    for r in expanded:
+        k = _source_key(r.event)
+        if counts[k] < global_max:
+            capped_exp.append(r)
+            counts[k] += 1
+
+    return highlights, capped_main, capped_exp
+
+
 def build_digest_html(
     events: list[EventItem],
     *,
@@ -133,6 +172,11 @@ def build_digest_html(
     total_before_window: int | None = None,
     highlight_count: int = 5,
     max_per_source_highlights: int = 3,
+    max_recommendations: int = 4,
+    max_expanded: int = 6,
+    global_max_per_source: int = 5,
+    score_floor_recommendation: int = 40,
+    score_floor_expanded: int = 30,
     scraper_counts_merged: dict[str, int] | None = None,
 ) -> str:
     tz = ZoneInfo(tz_name)
@@ -158,15 +202,27 @@ def build_digest_html(
         highlights, rest = select_candidates(
             events,
             max_highlights=max(1, highlight_count),
-            max_recommendations=4,
+            max_recommendations=max_recommendations,
             max_per_source=max_per_source_highlights,
         )
 
         highlights = _collapse_duplicates(highlights)
         rest = _collapse_duplicates(rest)
 
-        main_rest = [r for r in rest if not r.event.is_service_format and r.score >= 40]
-        expanded = [r for r in rest if r.event.is_service_format or r.score < 40]
+        main_rest = [
+            r for r in rest
+            if not r.event.is_service_format and r.score >= score_floor_recommendation
+        ]
+        expanded = [
+            r for r in rest
+            if (r.event.is_service_format or r.score < score_floor_recommendation)
+            and r.score >= score_floor_expanded
+        ]
+
+        highlights, main_rest, expanded = _apply_global_source_cap(
+            highlights, main_rest, expanded,
+            global_max=global_max_per_source,
+        )
 
         # Destacats
         lines.append("<b>Destacats de la setmana</b>")
@@ -179,22 +235,22 @@ def build_digest_html(
             lines.append("<i>(Cap entrada prou rellevant per destacar.)</i>")
             lines.append("")
 
-        # Recomanacions (flat list, max 4)
+        # Recomanacions
         if main_rest:
             lines.append("<b>Recomanacions</b>")
             main_rest.sort(key=lambda r: (-r.score, r.event.starts_at or ""))
-            for r in main_rest[:4]:
+            for r in main_rest[:max_recommendations]:
                 lines.append(_format_recommendation_line(r))
             lines.append("")
 
-        # Agenda ampliada (max 6)
+        # Agenda ampliada
         if expanded:
             lines.append("<b>Agenda ampliada</b>")
             expanded.sort(key=lambda r: (r.event.starts_at or "", r.event.title))
-            for r in expanded[:6]:
+            for r in expanded[:max_expanded]:
                 lines.append(_format_recommendation_line(r))
-            if len(expanded) > 6:
-                lines.append(f"  <i>… i {len(expanded) - 6} més</i>")
+            if len(expanded) > max_expanded:
+                lines.append(f"  <i>… i {len(expanded) - max_expanded} més</i>")
             lines.append("")
 
     if failures:
@@ -204,16 +260,28 @@ def build_digest_html(
     return "\n".join(lines).strip()
 
 
-def format_novelties_html(events: list[EventItem]) -> str:
+def format_novelties_html(
+    events: list[EventItem],
+    *,
+    score_floor: int = 40,
+    max_items: int = 10,
+) -> str:
     if not events:
         return ""
     _apply_areas(events)
+    worthy = [
+        e for e in events
+        if not e.is_service_format and score_event(e) >= score_floor
+    ]
+    if not worthy:
+        return ""
+    worthy.sort(key=lambda e: (-score_event(e), e.starts_at or ""))
     lines: list[str] = [
         "",
         "<b>Novetats al radar</b>",
         "",
     ]
-    for e in events[:10]:
+    for e in worthy[:max_items]:
         title = html.escape(e.title)
         link = html.escape(e.url, quote=True)
         when = _fmt_day((e.starts_at or "")[:10])
@@ -221,6 +289,6 @@ def format_novelties_html(events: list[EventItem]) -> str:
         lines.append(
             f'• <b>{when}</b> — <a href="{link}">{title}</a> · <i>{inst}</i>'
         )
-    if len(events) > 10:
-        lines.append(f"  <i>… i {len(events) - 10} més</i>")
+    if len(worthy) > max_items:
+        lines.append(f"  <i>… i {len(worthy) - max_items} més</i>")
     return "\n".join(lines)

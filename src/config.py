@@ -33,6 +33,13 @@ class Settings:
     rss_feed_set: str
     digest_highlight_count: int
     digest_max_per_source_highlights: int
+    digest_max_recommendations: int
+    digest_max_expanded: int
+    digest_max_novelties: int
+    digest_global_max_per_source: int
+    digest_score_floor_recommendation: int
+    digest_score_floor_expanded: int
+    digest_score_floor_novelties: int
 
 
 def _rss_feed_set() -> str:
@@ -103,4 +110,11 @@ def load_settings() -> Settings:
         rss_feed_set=_rss_feed_set(),
         digest_highlight_count=max(3, min(12, _int_env("DIGEST_HIGHLIGHT_COUNT", 5))),
         digest_max_per_source_highlights=max(1, min(6, _int_env("DIGEST_MAX_PER_SOURCE", 3))),
+        digest_max_recommendations=max(1, min(10, _int_env("DIGEST_MAX_RECOMMENDATIONS", 4))),
+        digest_max_expanded=max(0, min(12, _int_env("DIGEST_MAX_EXPANDED", 6))),
+        digest_max_novelties=max(0, min(20, _int_env("DIGEST_MAX_NOVELTIES", 10))),
+        digest_global_max_per_source=max(1, min(15, _int_env("DIGEST_GLOBAL_MAX_PER_SOURCE", 5))),
+        digest_score_floor_recommendation=max(0, min(100, _int_env("DIGEST_SCORE_FLOOR_RECOMMENDATION", 40))),
+        digest_score_floor_expanded=max(0, min(100, _int_env("DIGEST_SCORE_FLOOR_EXPANDED", 30))),
+        digest_score_floor_novelties=max(0, min(100, _int_env("DIGEST_SCORE_FLOOR_NOVELTIES", 40))),
     )

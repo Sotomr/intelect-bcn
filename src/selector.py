@@ -91,6 +91,21 @@ _PENALTY_PATTERNS = (
     ("ceguesa", -15), ("baixa visio", -15), ("portes obertes", -8),
 )
 
+# ---- Scoring constants ----
+_BASE_SCORE = 50
+_PROFILE_KEYWORD_BONUS = 4
+_PROFILE_KEYWORD_CAP = 16
+_DETAIL_TEXT_MIN_LEN = 100
+_DETAIL_TEXT_BONUS = 6
+_SPEAKERS_BONUS = 4
+_TIME_BONUS = 2
+_VENUE_BONUS = 2
+_SERVICE_FORMAT_PENALTY = -20
+_HIGHLIGHT_SCORE_FLOOR = 55
+_EDITORIAL_PHRASE_MAX_LEN = 280
+_MIN_DETAIL_LEN_FOR_PHRASE = 40
+_MIN_SUMMARY_LEN_FOR_PHRASE = 30
+
 
 @dataclass
 class SelectionResult:
@@ -103,7 +118,7 @@ class SelectionResult:
 
 def score_event(e: EventItem) -> int:
     """Score 0-100 basat en format, tier, perfil, enriquiment i font."""
-    s = 50
+    s = _BASE_SCORE
 
     s += _FORMAT_SCORES.get(e.event_kind, 0)
     s += _TIER_SCORES.get(e.tier, 0)
@@ -111,7 +126,7 @@ def score_event(e: EventItem) -> int:
 
     blob = _norm(f"{e.title} {e.summary} {e.detail_text}")
     profile_matches = sum(1 for kw in _PROFILE_KEYWORDS if kw in blob)
-    s += min(profile_matches * 4, 16)
+    s += min(profile_matches * _PROFILE_KEYWORD_BONUS, _PROFILE_KEYWORD_CAP)
 
     src = (e.source or "").split(":")[0]
     s += _SOURCE_BONUS.get(src, 0)
@@ -121,17 +136,17 @@ def score_event(e: EventItem) -> int:
 
     s += _QUALITY_BONUS.get(e.source_quality, 0)
 
-    if e.detail_fetched and e.detail_text and len(e.detail_text) > 100:
-        s += 6
+    if e.detail_fetched and e.detail_text and len(e.detail_text) > _DETAIL_TEXT_MIN_LEN:
+        s += _DETAIL_TEXT_BONUS
     if e.speakers:
-        s += 4
+        s += _SPEAKERS_BONUS
     if e.starts_at_time:
-        s += 2
+        s += _TIME_BONUS
     if e.venue:
-        s += 2
+        s += _VENUE_BONUS
 
     if e.is_service_format:
-        s -= 20
+        s += _SERVICE_FORMAT_PENALTY
 
     tb = _norm(e.title)
     for pattern, penalty in _PENALTY_PATTERNS:
@@ -141,51 +156,66 @@ def score_event(e: EventItem) -> int:
     return max(0, min(100, s))
 
 
+_KIND_LABELS: dict[str, str] = {
+    "debat": "Debat",
+    "conferencia": "Conferència",
+    "seminari": "Seminari",
+    "xerrada": "Xerrada",
+    "presentacio": "Presentació",
+    "taller": "Taller",
+    "projeccio": "Projecció",
+}
+
+
+def _best_sentence(text: str, min_len: int = 25) -> str:
+    """Extract the best descriptive sentence from a block of text."""
+    sentences = re.split(r"(?<=[.!?])\s+", text[:800])
+    skip_prefixes = ("abstract", "resum", "keywords", "http", "www.")
+    for sent in sentences[:6]:
+        sent = sent.strip()
+        if len(sent) < min_len:
+            continue
+        if any(sent.lower().startswith(p) for p in skip_prefixes):
+            continue
+        return sent
+    return ""
+
+
 def _heuristic_phrase(e: EventItem) -> str:
     """Frase editorial amb veu: «per què importa», no un snippet sec."""
     inst = (e.institution or "").strip()
     title = (e.title or "").strip()
     speakers = (e.speakers or "").strip()
     detail = (e.detail_text or "").strip()
-
-    # If we have rich detail_text, extract the "why it matters"
-    if detail and len(detail) > 80:
-        first_sentence = re.split(r"(?<=[.!?])\s+", detail[:500])
-        for sent in first_sentence[:3]:
-            sent = sent.strip()
-            if len(sent) > 40 and not sent.lower().startswith("abstract"):
-                if speakers and speakers not in sent:
-                    return _clip(f"{sent}", 280)
-                return _clip(sent, 280)
-
-    # Build phrase from speakers + kind + institution
-    kind_labels = {
-        "debat": "Debat",
-        "conferencia": "Conferència",
-        "seminari": "Seminari",
-        "xerrada": "Xerrada",
-        "presentacio": "Presentació",
-        "taller": "Taller",
-        "projeccio": "Projecció",
-    }
-    fmt = kind_labels.get(e.event_kind, "")
-
-    if speakers and fmt:
-        return _clip(f"{speakers} · {fmt} a {inst}.", 280)
-    if speakers:
-        return _clip(f"Amb {speakers} — {inst}.", 280)
-
-    # Fallback: summary if it adds value over title
     summ = (e.summary or "").strip()
-    if summ and len(summ) > 60 and _norm(summ[:80]) != _norm(title[:80]):
-        return _clip(summ, 280)
+    fmt = _KIND_LABELS.get(e.event_kind, "")
+
+    if detail and len(detail) > _MIN_DETAIL_LEN_FOR_PHRASE:
+        best = _best_sentence(detail)
+        if best:
+            return _clip(best, _EDITORIAL_PHRASE_MAX_LEN)
+
+    if summ and len(summ) > _MIN_DETAIL_LEN_FOR_PHRASE and _norm(summ[:80]) != _norm(title[:80]):
+        best = _best_sentence(summ)
+        if best:
+            return _clip(best, _EDITORIAL_PHRASE_MAX_LEN)
+
+    if speakers and fmt and inst:
+        return _clip(f"{speakers} · {fmt} a {inst}.", _EDITORIAL_PHRASE_MAX_LEN)
+    if speakers and inst:
+        return _clip(f"Amb {speakers} — {inst}.", _EDITORIAL_PHRASE_MAX_LEN)
+    if speakers and fmt:
+        return _clip(f"{speakers} · {fmt}.", _EDITORIAL_PHRASE_MAX_LEN)
+
+    if summ and len(summ) > _MIN_SUMMARY_LEN_FOR_PHRASE and _norm(summ[:60]) != _norm(title[:60]):
+        return _clip(summ, _EDITORIAL_PHRASE_MAX_LEN)
 
     if fmt and inst:
         return f"{fmt} a {inst}."
     return inst or ""
 
 
-def _clip(text: str, max_len: int = 280) -> str:
+def _clip(text: str, max_len: int = _EDITORIAL_PHRASE_MAX_LEN) -> str:
     text = (text or "").strip()
     if len(text) <= max_len:
         return text
@@ -241,7 +271,7 @@ def select_candidates(
     for e, s in candidates:
         if len(picked) >= max_highlights:
             break
-        if s < 55:
+        if s < _HIGHLIGHT_SCORE_FLOOR:
             break
         tk = _title_key(e.title)
         if tk in picked_titles:

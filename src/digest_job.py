@@ -79,6 +79,11 @@ def run_digest() -> int:
         failures=[],
         highlight_count=settings.digest_highlight_count,
         max_per_source_highlights=settings.digest_max_per_source_highlights,
+        max_recommendations=settings.digest_max_recommendations,
+        max_expanded=settings.digest_max_expanded,
+        global_max_per_source=settings.digest_global_max_per_source,
+        score_floor_recommendation=settings.digest_score_floor_recommendation,
+        score_floor_expanded=settings.digest_score_floor_expanded,
     )
     _max = TELEGRAM_MAX - 150
     sections = merge_for_telegram(chunk_text(body, _max))
@@ -86,7 +91,11 @@ def run_digest() -> int:
     if settings.append_novelties and not is_first_seen_registry:
         new_e = compute_novelties(windowed, seen)
         if new_e:
-            nov = format_novelties_html(new_e)
+            nov = format_novelties_html(
+                new_e,
+                score_floor=settings.digest_score_floor_novelties,
+                max_items=settings.digest_max_novelties,
+            )
             sections.extend(merge_for_telegram(chunk_text(nov, _max)))
             logger.info("Novetats: %s", len(new_e))
 

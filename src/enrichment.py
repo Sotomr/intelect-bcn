@@ -11,7 +11,7 @@ import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 from http_client import fetch_text
 from models import EventItem
@@ -25,8 +25,7 @@ _RE_VENUE_HINTS = re.compile(
     re.IGNORECASE,
 )
 
-# Sources that shouldn't be enriched (URL doesn't resolve to useful detail)
-_SKIP_SOURCES = frozenset({"guia_bcn", "gencat"})
+_SKIP_SOURCES = frozenset({"gencat"})
 
 
 def _clean_text(raw: str, max_len: int = 2000) -> str:
@@ -149,6 +148,47 @@ def _enrich_cidob(soup: BeautifulSoup, e: EventItem) -> None:
                 break
 
 
+def _enrich_guia(soup: BeautifulSoup, e: EventItem) -> None:
+    """Extractor per a pàgines de guia.barcelona.cat/ca/agenda/{id}."""
+    body = soup.select_one("body")
+    if not body:
+        return
+    text = body.get_text(" ", strip=True)
+
+    if not e.starts_at_time:
+        e.starts_at_time = _extract_time(text[:3000])
+
+    if not e.institution:
+        for sel in (".event-detail__place", ".field--name-field-place", ".col-location"):
+            el = soup.select_one(sel)
+            if el:
+                place = el.get_text(strip=True)
+                if place and len(place) > 2:
+                    e.institution = place[:120]
+                    break
+
+    if not e.venue:
+        for sel in (".event-detail__address", ".field--name-field-address"):
+            el = soup.select_one(sel)
+            if el:
+                addr = el.get_text(strip=True)
+                if addr and len(addr) > 4:
+                    e.venue = addr[:120]
+                    break
+
+    if not e.detail_text:
+        desc = soup.select_one(".event-detail__description, .field--name-body, .event-body")
+        if desc:
+            t = desc.get_text(" ", strip=True)
+            if len(t) > 30:
+                e.detail_text = _clean_text(t, 1500)
+        else:
+            paras = body.select("p")
+            chunks = [p.get_text(strip=True) for p in paras if len(p.get_text(strip=True)) > 30]
+            if chunks:
+                e.detail_text = _clean_text(" ".join(chunks[:8]), 1500)
+
+
 def _enrich_generic(soup: BeautifulSoup, e: EventItem) -> None:
     """Extractor genèric per a fonts RSS i altres."""
     body = soup.select_one("article, main, .content, .entry-content, body")
@@ -177,6 +217,7 @@ _SOURCE_EXTRACTORS = {
     "cccb": _enrich_cccb,
     "cidob": _enrich_cidob,
     "iccub": _enrich_iccub,
+    "guia_bcn": _enrich_guia,
 }
 
 

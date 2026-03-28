@@ -196,7 +196,11 @@ def fetch_guia_barcelona_csv(csv_url: str = DEFAULT_GUIA_CSV) -> list[EventItem]
         rid = _row_key(row)
         if not rid:
             continue
-        inst = (row.get("institution_name") or "").strip() or "Barcelona (lloc)"
+        inst = (row.get("institution_name") or "").strip()
+        if not inst:
+            inst = (row.get("addresses_road_name") or "").strip()
+        if not inst:
+            inst = (row.get("addresses_district_name") or "").strip()
         url = f"https://guia.barcelona.cat/ca/agenda/{rid}"
         tier = "premium" if venue_tier_boost(inst) else "base"
         area = classify_area(name, inst)
