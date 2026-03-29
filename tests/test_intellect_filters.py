@@ -27,3 +27,8 @@ def test_taula_rodona_requires_topic_or_strong():
 
 def test_noise_taula_rodona_fanzin_combo():
     assert is_noise_title_intellect("Taula rodona: fanzín col·lectiu")
+
+
+def test_noise_taller_mobles_maqueta():
+    assert is_noise_title_intellect("Taller 'Mobles grans, arquitectures petites'")
+    assert is_noise_title_intellect("Taller de maquetes urbanes")

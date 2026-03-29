@@ -4,7 +4,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from digest import build_digest_html  # noqa: E402
+from digest import build_digest_html, format_novelties_html  # noqa: E402
 from models import EventItem  # noqa: E402
 
 
@@ -38,7 +38,7 @@ def test_digest_multiday_events():
         max_per_institution=20,
         max_base_events=50,
         failures=[],
-    )
+    ).html
     assert "Utopies" in out
     assert "Destacats" in out
     assert "CCCB" in out
@@ -66,7 +66,7 @@ def test_digest_no_internal_telemetry():
         max_base_events=50,
         failures=[],
         scraper_counts_merged={"cccb": 40},
-    )
+    ).html
     assert "Pipeline" not in out
     assert "RSS mitjà" not in out
     assert "via RSS" not in out
@@ -94,7 +94,47 @@ def test_digest_editorial_phrase_in_highlights():
         max_per_institution=5,
         max_base_events=50,
         failures=[],
-    )
+    ).html
     assert "Debat" in out
     assert "CCCB" in out
     assert "<i>" in out
+
+
+def test_novelties_excludes_digest_visible_keys():
+    """No repetir a «Novetats» el que ja surt al cos del digest."""
+    ev_digest = EventItem(
+        institution="CCCB",
+        title="Debat visible al digest",
+        url="https://cccb.org/a",
+        starts_at="2026-03-29",
+        tier="premium",
+        source="cccb",
+        event_kind="debat",
+        confidence="high",
+    )
+    ev_only_nov = EventItem(
+        institution="CCCB",
+        title="Altre debat només novetats",
+        url="https://cccb.org/b",
+        starts_at="2026-03-30",
+        tier="premium",
+        source="cccb",
+        event_kind="debat",
+        confidence="high",
+    )
+    evs = [ev_digest, ev_only_nov]
+    res = build_digest_html(
+        [ev_digest],
+        tz_name="Europe/Madrid",
+        window_days=14,
+        failures=[],
+    )
+    assert "visible al digest" in res.html
+    nov = format_novelties_html(
+        evs,
+        score_floor=1,
+        max_items=10,
+        exclude_visible_keys=res.visible_stable_keys,
+    )
+    assert "visible al digest" not in nov
+    assert "Altre debat" in nov

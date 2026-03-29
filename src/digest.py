@@ -14,6 +14,7 @@ import html
 import logging
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Iterable
 from zoneinfo import ZoneInfo
@@ -26,6 +27,14 @@ from selector import SelectionResult, score_event, select_candidates
 logger = logging.getLogger(__name__)
 
 _CURATED_DIGEST_SOURCES = frozenset({"cccb", "cidob", "iccub", "icfo", "ice_csic"})
+
+
+@dataclass(frozen=True)
+class DigestBuildResult:
+    """Resultat del digest principal: HTML i claus ja mostrades (per no repetir a «Novetats»)."""
+
+    html: str
+    visible_stable_keys: frozenset[str]
 
 
 def _src_base(source: str) -> str:
@@ -202,7 +211,7 @@ def build_digest_html(
     score_floor_recommendation: int = 40,
     score_floor_expanded: int = 30,
     scraper_counts_merged: dict[str, int] | None = None,
-) -> str:
+) -> DigestBuildResult:
     tz = ZoneInfo(tz_name)
     today = datetime.now(tz).date()
     end = today + timedelta(days=window_days - 1)
@@ -213,6 +222,8 @@ def build_digest_html(
         f"<i>{_fmt_day(today.isoformat())}–{_fmt_day(end.isoformat())}</i>",
         "",
     ]
+
+    visible_stable_keys: set[str] = set()
 
     n_before_editorial = len(events)
     events = _editorial_digest_candidates(events)
@@ -225,7 +236,8 @@ def build_digest_html(
     if not events and not failures:
         lines.append("Sense esdeveniments amb data dins la finestra.")
         logger.info("Digest: cap candidat després del filtre editorial")
-        return "\n".join(lines)
+        body = "\n".join(lines).strip()
+        return DigestBuildResult(html=body, visible_stable_keys=frozenset())
 
     if not events and failures:
         lines.append("<b>Cap acte dins la finestra de dates.</b>")
@@ -269,6 +281,7 @@ def build_digest_html(
         lines.append("")
         if highlights:
             for r in highlights:
+                visible_stable_keys.add(r.event.stable_key())
                 lines.append(_format_highlight_block(r))
                 lines.append("")
         else:
@@ -281,6 +294,7 @@ def build_digest_html(
             main_rest.sort(key=lambda r: (-r.score, r.event.starts_at or ""))
             for r in main_rest[:max_recommendations]:
                 lines.append(_format_recommendation_line(r))
+                visible_stable_keys.add(r.event.stable_key())
             lines.append("")
 
         # Agenda ampliada
@@ -289,6 +303,7 @@ def build_digest_html(
             expanded.sort(key=lambda r: (r.event.starts_at or "", r.event.title))
             for r in expanded[:max_expanded]:
                 lines.append(_format_recommendation_line(r))
+                visible_stable_keys.add(r.event.stable_key())
             if len(expanded) > max_expanded:
                 lines.append(f"  <i>… i {len(expanded) - max_expanded} més</i>")
             lines.append("")
@@ -297,7 +312,8 @@ def build_digest_html(
         lines.append("<b>Fonts amb error</b>")
         for f in failures:
             lines.append(f"  • {html.escape(f)}")
-    return "\n".join(lines).strip()
+    body = "\n".join(lines).strip()
+    return DigestBuildResult(html=body, visible_stable_keys=frozenset(visible_stable_keys))
 
 
 def format_novelties_html(
@@ -305,14 +321,18 @@ def format_novelties_html(
     *,
     score_floor: int = 40,
     max_items: int = 10,
+    exclude_visible_keys: frozenset[str] | None = None,
 ) -> str:
     if not events:
         return ""
     events = _editorial_digest_candidates(events)
     _apply_areas(events)
+    excl = exclude_visible_keys or frozenset()
     worthy = [
         e for e in events
-        if not e.is_service_format and score_event(e) >= score_floor
+        if not e.is_service_format
+        and score_event(e) >= score_floor
+        and e.stable_key() not in excl
     ]
     if not worthy:
         return ""

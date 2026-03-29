@@ -77,7 +77,7 @@ def run_digest() -> int:
     fetched_at = datetime.now(timezone.utc).isoformat()
     current = Snapshot(fetched_at=fetched_at, events=windowed)
 
-    body = build_digest_html(
+    digest_res = build_digest_html(
         windowed,
         tz_name=settings.timezone,
         window_days=settings.window_days,
@@ -90,6 +90,7 @@ def run_digest() -> int:
         score_floor_recommendation=settings.digest_score_floor_recommendation,
         score_floor_expanded=settings.digest_score_floor_expanded,
     )
+    body = digest_res.html
     _max = TELEGRAM_MAX - 150
     sections = merge_for_telegram(chunk_text(body, _max))
 
@@ -100,6 +101,7 @@ def run_digest() -> int:
                 new_e,
                 score_floor=settings.digest_score_floor_novelties,
                 max_items=settings.digest_max_novelties,
+                exclude_visible_keys=digest_res.visible_stable_keys,
             )
             sections.extend(merge_for_telegram(chunk_text(nov, _max)))
             logger.info("Novetats: %s", len(new_e))
